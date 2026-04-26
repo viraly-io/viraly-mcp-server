@@ -5,6 +5,8 @@
 
 The official [Model Context Protocol](https://modelcontextprotocol.io) server for [Viraly](https://viraly.io) — connect any MCP-aware AI assistant (Claude Desktop, Claude.ai web, ChatGPT, Cursor, custom agents built on the Anthropic / OpenAI SDKs) directly to your Viraly social-media workspace and let it schedule posts, run analytics, generate captions, and manage every channel you've connected, all in plain language.
 
+**First-class MCP support — 32+ tools, full CRUD.** Not a read-only sidekick: your AI can create, read, update, and delete across posts, channels, media, analytics, and bio links — bound by the same OAuth scopes and plan limits as the web app.
+
 > **Available on every Viraly plan, including Free.** No API key — sign in once with OAuth and your AI assistant gets scoped, revocable access to your workspace.
 
 - **Public endpoint:** `https://mcp.viraly.io/mcp`
@@ -26,7 +28,7 @@ Once connected, your AI assistant can drive Viraly using natural language:
 
 > *"Reschedule everything in the Promo queue from this week to next week."*
 
-The MCP server exposes **32 tools** across reading, writing, analytics, and AI generation — see the [full tool catalog](#tool-catalog) below.
+The MCP server exposes **32+ tools** across reading, writing, analytics, and AI generation — see the [full tool catalog](#tool-catalog) below.
 
 ---
 
@@ -70,7 +72,7 @@ Any MCP-compliant client over Streamable HTTP works. Point it at `https://mcp.vi
 
 ## Tool catalog
 
-32 tools, grouped by what they do. All tools are scoped — your assistant can only call the ones whose scopes you granted at consent time.
+32+ tools, grouped by what they do. All tools are scoped — your assistant can only call the ones whose scopes you granted at consent time.
 
 ### Workspace & discovery
 
