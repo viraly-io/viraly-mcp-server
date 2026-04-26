@@ -68,8 +68,22 @@ registerTool({
         timezone: input.timezone,
         scheduleAction,
         categoryId: input.category_id,
+        // Inherit the post's existing attachments when the caller didn't
+        // specify a new list. The API returns them under `postAttachments`
+        // (each with a nested `attachment.id`); the old `attachmentIds`
+        // fallback is kept for any consumer that still serializes it.
         postAttachments:
           input.attachment_ids?.map((id, i) => ({ attachmentId: id, order: i })) ??
+          current.postAttachments
+            ?.flatMap((a, i) => {
+              const attachmentId = a.attachment?.id;
+              if (!attachmentId) return [];
+              return [{
+                attachmentId,
+                order: a.order ?? i,
+                altText: a.altText ?? undefined,
+              }];
+            }) ??
           current.attachmentIds?.map((id, i) => ({ attachmentId: id, order: i })) ??
           [],
       },
