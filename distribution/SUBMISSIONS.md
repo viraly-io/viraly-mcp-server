@@ -12,7 +12,7 @@ production deployment to be live first (Phase 5 CTO handoff).
 - **OAuth metadata:** `https://api.viraly.io/.well-known/oauth-authorization-server`
 - **Protected resource metadata:** `https://mcp.viraly.io/.well-known/oauth-protected-resource`
 - **Supports DCR:** yes (RFC 7591 at `https://api.viraly.io/api/oauth/register`)
-- **Logo:** 512×512 PNG, transparent background — `assets/viraly-mcp-logo.png` (TODO)
+- **Logo:** `assets/viraly-mcp-logo.png` — 540×540 PNG, transparent background (Viraly hummingbird)
 - **Short description:** "Schedule social posts, generate captions, and check analytics across 11+ platforms — directly from Claude."
 - **Tool count:** 18 (11 read, 7 write)
 - **Privacy policy:** https://viraly.io/privacy-policy
