@@ -1,0 +1,75 @@
+name: Deploy (production)
+
+# Production deploys are MANUAL by design. Two safeguards:
+#   1. workflow_dispatch only — no auto-trigger on push.
+#   2. The App Runner service has AutoDeploymentsEnabled=false, so even if
+#      an image with the `production` tag lands in ECR, no deploy fires
+#      until this workflow explicitly calls start-deployment.
+#
+# Required inputs at run time:
+#   - version: the semver tag of the image to push and deploy (e.g. 0.1.1).
+#     Image is also tagged `production` AND `<git-sha>` for traceability.
+#
+# Actions pinned to commit SHAs (tag in trailing comment).
+# Currently gated by `if: false` until OIDC trust is wired and the secrets
+# below are set:
+#   - AWS_DEPLOY_ROLE_ARN
+#   - APP_RUNNER_SERVICE_ARN_PRODUCTION
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Image version tag (semver, e.g. 0.1.1)"
+        required: true
+
+jobs:
+  deploy:
+    if: false
+    runs-on: ubuntu-latest
+    environment: production
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@5579c002bb4778aa43395ef1df492868a9a1c83f # v4.0.2
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: us-east-1
+
+      - name: Login to ECR
+        id: ecr
+        uses: aws-actions/amazon-ecr-login@4625ce35226a7557230889aae2f52eb50ec3dcda # v2.0.1
+
+      - name: Build and push image
+        env:
+          ECR_REGISTRY: ${{ steps.ecr.outputs.registry }}
+          ECR_REPO: viraly-mcp-server
+          VERSION: ${{ github.event.inputs.version }}
+          SHA: ${{ github.sha }}
+        run: |
+          docker build --provenance=false --sbom=false \
+            -t $ECR_REGISTRY/$ECR_REPO:$VERSION \
+            -t $ECR_REGISTRY/$ECR_REPO:$SHA \
+            -t $ECR_REGISTRY/$ECR_REPO:production .
+          docker push $ECR_REGISTRY/$ECR_REPO:$VERSION
+          docker push $ECR_REGISTRY/$ECR_REPO:$SHA
+          docker push $ECR_REGISTRY/$ECR_REPO:production
+
+      - name: Update App Runner to point at the new immutable tag
+        env:
+          SERVICE_ARN: ${{ secrets.APP_RUNNER_SERVICE_ARN_PRODUCTION }}
+          ECR_REGISTRY: ${{ steps.ecr.outputs.registry }}
+          VERSION: ${{ github.event.inputs.version }}
+        run: |
+          aws apprunner update-service \
+            --service-arn "$SERVICE_ARN" \
+            --source-configuration "{
+              \"ImageRepository\": {
+                \"ImageIdentifier\": \"${ECR_REGISTRY}/viraly-mcp-server:${VERSION}\",
+                \"ImageRepositoryType\": \"ECR\"
+              }
+            }"

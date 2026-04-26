@@ -5,10 +5,13 @@ on:
     branches: [staging]
   workflow_dispatch:
 
-# These steps are placeholders. Production wiring happens during Phase 5
-# CTO handoff — the AWS account, App Runner service ARN, and OIDC role
-# are not yet provisioned. Once they are, set the secrets named below
-# and remove the `if: false` guard.
+# Currently gated by `if: false`. Once OIDC trust is set up between this repo
+# and the AWS account, set the secrets named below and remove the guard.
+#   - AWS_DEPLOY_ROLE_ARN: the role this workflow assumes via OIDC
+#   - APP_RUNNER_SERVICE_ARN_STAGING: arn of viraly-mcp-server-staging
+#
+# Actions are pinned to commit SHAs (tag in trailing comment) so a compromised
+# action tag can't push malicious code into the deploy path.
 
 jobs:
   deploy:
@@ -18,17 +21,17 @@ jobs:
       id-token: write
       contents: read
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Configure AWS credentials (OIDC)
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@5579c002bb4778aa43395ef1df492868a9a1c83f # v4.0.2
         with:
           role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
-          aws-region: us-east-1
+          aws-region: us-east-2
 
       - name: Login to ECR
         id: ecr
-        uses: aws-actions/amazon-ecr-login@v2
+        uses: aws-actions/amazon-ecr-login@4625ce35226a7557230889aae2f52eb50ec3dcda # v2.0.1
 
       - name: Build and push image
         env:
@@ -36,7 +39,9 @@ jobs:
           ECR_REPO: viraly-mcp-server
           IMAGE_TAG: ${{ github.sha }}
         run: |
-          docker build -t $ECR_REGISTRY/$ECR_REPO:$IMAGE_TAG -t $ECR_REGISTRY/$ECR_REPO:staging .
+          docker build --provenance=false --sbom=false \
+            -t $ECR_REGISTRY/$ECR_REPO:$IMAGE_TAG \
+            -t $ECR_REGISTRY/$ECR_REPO:staging .
           docker push $ECR_REGISTRY/$ECR_REPO:$IMAGE_TAG
           docker push $ECR_REGISTRY/$ECR_REPO:staging
 

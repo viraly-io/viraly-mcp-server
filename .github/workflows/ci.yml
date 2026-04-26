@@ -6,12 +6,17 @@ on:
   pull_request:
     branches: [main, staging]
 
+# Pin Actions to commit SHAs (with the human-readable tag in a comment) so a
+# compromised action tag can't push malicious code into our CI. This is the
+# practice OpenSSF / GitHub Security recommend for any repo that runs CI on
+# pushes from people other than the maintainers — i.e. every public repo.
+
 jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 20
           cache: npm
