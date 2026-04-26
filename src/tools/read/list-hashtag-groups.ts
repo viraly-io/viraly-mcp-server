@@ -1,0 +1,45 @@
+import { z } from 'zod';
+
+import { getClient } from '../../api/client-factory.js';
+import { registerTool } from '../registry.js';
+
+interface HashtagDtoUpstream {
+  id: string;
+  name?: string;
+  hashtags?: string[];
+  socialSetId?: string;
+  createdAt?: string;
+}
+
+const inputSchema = z.object({
+  social_set_id: z
+    .string()
+    .optional()
+    .describe('Optional. Restrict the result to hashtag groups belonging to this social set.'),
+});
+
+registerTool({
+  name: 'list_hashtag_groups',
+  description:
+    'List the saved hashtag groups in the workspace. Each group has a name and a list of hashtags the user can append to posts. Use this to discover hashtag group ids before referencing them in schedule_post.',
+  inputSchema,
+  handler: async (input) => {
+    const client = getClient();
+    const groups = await client.call<HashtagDtoUpstream[]>({
+      method: 'GET',
+      path: '/api/platforms/hashtags',
+      query: { socialSetId: input.social_set_id },
+    });
+
+    return {
+      count: groups.length,
+      groups: groups.map((g) => ({
+        id: g.id,
+        name: g.name,
+        social_set_id: g.socialSetId,
+        hashtags: g.hashtags ?? [],
+        created_at: g.createdAt,
+      })),
+    };
+  },
+});

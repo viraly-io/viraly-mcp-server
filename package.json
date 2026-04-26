@@ -1,0 +1,58 @@
+{
+  "name": "@viraly/mcp",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Viraly Model Context Protocol server — connect Viraly to Claude, ChatGPT, Cursor, and other LLM clients.",
+  "license": "UNLICENSED",
+  "homepage": "https://viraly.io/mcp",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/viraly/viraly-mcp-server.git"
+  },
+  "type": "module",
+  "main": "./dist/server.js",
+  "bin": {
+    "viraly-mcp": "./dist/server.js"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx watch src/server.ts",
+    "start": "node dist/server.js",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.4",
+    "cors": "^2.8.5",
+    "express": "^4.21.2",
+    "pino": "^9.5.0",
+    "pino-http": "^10.3.0",
+    "prom-client": "^15.1.3",
+    "undici": "^7.1.1",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/express": "^5.0.0",
+    "@types/node": "^22.10.2",
+    "@typescript-eslint/eslint-plugin": "^8.18.2",
+    "@typescript-eslint/parser": "^8.18.2",
+    "eslint": "^9.17.0",
+    "eslint-config-prettier": "^9.1.0",
+    "prettier": "^3.4.2",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  }
+}

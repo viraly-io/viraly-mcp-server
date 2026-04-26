@@ -1,0 +1,13 @@
+{
+  "_comment": "Trust policy for the App Runner instance role above. Attach to the same role.",
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "Service": "tasks.apprunner.amazonaws.com"
+      },
+      "Action": "sts:AssumeRole"
+    }
+  ]
+}
