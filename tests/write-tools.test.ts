@@ -64,8 +64,29 @@ describe('write tools registered', () => {
     );
   });
 
-  it('total tool count is 18 (11 read + 7 write)', () => {
-    expect(listRegisteredTools().length).toBe(18);
+  it('the post-Phase-4 write tools are also present', () => {
+    const names = listRegisteredTools()
+      .filter((t) => t.isWrite)
+      .map((t) => t.name);
+    expect(names).toEqual(
+      expect.arrayContaining([
+        'reschedule_post',
+        'publish_post_now',
+        'generate_hashtags',
+        'update_social_set_timezone',
+        'trigger_analytics_sync',
+        'export_analytics_csv',
+        'get_url_preview',
+        'disconnect_channel',
+      ]),
+    );
+  });
+
+  it('total tool count is 32 (17 read + 15 write)', () => {
+    const tools = listRegisteredTools();
+    expect(tools.length).toBe(32);
+    expect(tools.filter((t) => !t.isWrite).length).toBe(17);
+    expect(tools.filter((t) => t.isWrite).length).toBe(15);
   });
 });
 
