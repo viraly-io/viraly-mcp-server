@@ -19,7 +19,9 @@ import { registerAllTools } from '../tools/registry.js';
  *
  * Endpoints:
  *   GET  /health   — liveness, no auth
- *   GET  /metrics  — Prometheus, no auth (assume internal-only via VPC/SG)
+ *   GET  /metrics  — Prometheus exposition. Auth is optional via
+ *                    MCP_METRICS_TOKEN; when unset, gate at the network
+ *                    layer (WAF / SG).
  *   GET  /.well-known/oauth-protected-resource — RFC 9728 metadata, no auth
  *   POST /mcp      — MCP JSON-RPC, requires Bearer vat_*
  *   GET  /mcp      — SSE event stream (sessionId in header)
