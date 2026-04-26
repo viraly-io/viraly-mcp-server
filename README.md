@@ -50,8 +50,8 @@ src/
 ```bash
 npm install
 npm run build
-VIRALY_API_ORIGIN=https://api.staging.viraly.io \
-VIRALY_OAUTH_ISSUER=https://api.staging.viraly.io \
+VIRALY_API_ORIGIN=https://api.beta.viraly.io \
+VIRALY_OAUTH_ISSUER=https://api.beta.viraly.io \
 MCP_PUBLIC_ORIGIN=https://localhost:8080 \
 MCP_TRANSPORT=http \
 PORT=8080 \
