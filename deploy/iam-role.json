@@ -1,5 +1,4 @@
 {
-  "_comment": "IAM role for the App Runner service. Attach as the InstanceRole on the service. Includes only the permissions the running container needs at runtime — no deploy/build permissions.",
   "Version": "2012-10-17",
   "Statement": [
     {
@@ -10,16 +9,15 @@
         "logs:PutLogEvents",
         "logs:DescribeLogStreams"
       ],
-      "Resource": "arn:aws:logs:*:*:log-group:/aws/apprunner/viraly-mcp-server/*"
+      "Resource": "arn:aws:logs:*:*:log-group:/aws/apprunner/viraly-mcp-server*:*"
     },
     {
-      "Sid": "SecretsManagerReadIfNeeded",
+      "Sid": "SecretsManagerReadMcpOnly",
       "Effect": "Allow",
       "Action": [
         "secretsmanager:GetSecretValue"
       ],
-      "Resource": "arn:aws:secretsmanager:*:*:secret:mcp-server/*",
-      "_comment": "v1 has no secrets — keep this stub for future use (e.g. an API origin override key, third-party telemetry tokens)."
+      "Resource": "arn:aws:secretsmanager:*:*:secret:mcp-server/*"
     }
   ]
 }
