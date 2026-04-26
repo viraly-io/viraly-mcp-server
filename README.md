@@ -85,7 +85,7 @@ node dist/server.js
 | Method | Path                                      | Auth | Notes |
 |--------|-------------------------------------------|------|-------|
 | GET    | `/health`                                 | none | Liveness probe |
-| GET    | `/metrics`                                | none | Prometheus exposition; firewall to internal |
+| GET    | `/metrics`                                | optional bearer | Prometheus exposition. Set `MCP_METRICS_TOKEN` to require `Authorization: Bearer <token>`; otherwise gate at the network layer (WAF / SG). |
 | GET    | `/.well-known/oauth-protected-resource`   | none | RFC 9728 |
 | POST   | `/mcp`                                    | Bearer `vat_*` | MCP JSON-RPC |
 | GET    | `/mcp`                                    | Bearer `vat_*` | SSE event stream |
