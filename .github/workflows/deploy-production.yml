@@ -1,31 +1,38 @@
 name: Deploy (production)
 
-# Production deploys are MANUAL by design. Two safeguards:
+# Production deploys are MANUAL by design. Three safeguards:
 #   1. workflow_dispatch only — no auto-trigger on push.
-#   2. The App Runner service has AutoDeploymentsEnabled=false, so even if
+#   2. `environment: production` — required reviewer (caldwellg) must approve
+#      every run before AWS calls happen.
+#   3. The App Runner service has AutoDeploymentsEnabled=false, so even if
 #      an image with the `production` tag lands in ECR, no deploy fires
-#      until this workflow explicitly calls start-deployment.
+#      until this workflow explicitly calls UpdateService.
+#
+# The role this assumes is locked to:
+#   - this exact repo (viraly-io/viraly-mcp-server)
+#   - the `production` GitHub Environment (NOT a branch)
+# and has scoped permissions: ECR push to viraly-mcp-server (us-east-1 only)
+# and apprunner:UpdateService on viraly-mcp-server only. Cannot touch staging.
 #
 # Required inputs at run time:
-#   - version: the semver tag of the image to push and deploy (e.g. 0.1.1).
+#   - version: the semver tag of the image to push and deploy (e.g. 0.1.2).
 #     Image is also tagged `production` AND `<git-sha>` for traceability.
 #
-# Actions pinned to commit SHAs (tag in trailing comment).
-# Currently gated by `if: false` until OIDC trust is wired and the secrets
-# below are set:
-#   - AWS_DEPLOY_ROLE_ARN
-#   - APP_RUNNER_SERVICE_ARN_PRODUCTION
+# Repo secrets used:
+#   AWS_DEPLOY_ROLE_ARN_PRODUCTION       — the prod deploy role
+#   APP_RUNNER_SERVICE_ARN_PRODUCTION    — prod service ARN
+#
+# Actions pinned to commit SHAs.
 
 on:
   workflow_dispatch:
     inputs:
       version:
-        description: "Image version tag (semver, e.g. 0.1.1)"
+        description: "Image version tag (semver, e.g. 0.1.2)"
         required: true
 
 jobs:
   deploy:
-    if: false
     runs-on: ubuntu-latest
     environment: production
     permissions:
@@ -37,7 +44,7 @@ jobs:
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@5579c002bb4778aa43395ef1df492868a9a1c83f # v4.0.2
         with:
-          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN_PRODUCTION }}
           aws-region: us-east-1
 
       - name: Login to ECR

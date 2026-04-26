@@ -5,17 +5,22 @@ on:
     branches: [staging]
   workflow_dispatch:
 
-# Currently gated by `if: false`. Once OIDC trust is set up between this repo
-# and the AWS account, set the secrets named below and remove the guard.
-#   - AWS_DEPLOY_ROLE_ARN: the role this workflow assumes via OIDC
-#   - APP_RUNNER_SERVICE_ARN_STAGING: arn of viraly-mcp-server-staging
+# Wired up to AWS via OIDC. The role this assumes is locked to:
+#   - this exact repo (viraly-io/viraly-mcp-server)
+#   - this exact branch ref (refs/heads/staging)
+# and has scoped permissions: ECR push to viraly-mcp-server (us-east-2 only)
+# and apprunner:StartDeployment on viraly-mcp-server-staging only. It cannot
+# touch prod, cannot read secrets, cannot create new IAM resources.
 #
-# Actions are pinned to commit SHAs (tag in trailing comment) so a compromised
-# action tag can't push malicious code into the deploy path.
+# Repo secrets used:
+#   AWS_DEPLOY_ROLE_ARN_STAGING        — the staging deploy role
+#   APP_RUNNER_SERVICE_ARN_STAGING     — staging service ARN
+#
+# Actions pinned to commit SHAs (tag in trailing comment) so a compromised
+# tag can't push malicious code into the deploy path.
 
 jobs:
   deploy:
-    if: false
     runs-on: ubuntu-latest
     permissions:
       id-token: write
@@ -26,7 +31,7 @@ jobs:
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@5579c002bb4778aa43395ef1df492868a9a1c83f # v4.0.2
         with:
-          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN_STAGING }}
           aws-region: us-east-2
 
       - name: Login to ECR
