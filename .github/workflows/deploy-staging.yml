@@ -50,7 +50,27 @@ jobs:
           docker push $ECR_REGISTRY/$ECR_REPO:$IMAGE_TAG
           docker push $ECR_REGISTRY/$ECR_REPO:staging
 
-      - name: Trigger App Runner deploy
+      # No explicit StartDeployment call — the staging App Runner service has
+      # AutoDeploymentsEnabled=true, so pushing :staging above triggers the
+      # deploy automatically. Calling StartDeployment here would race with the
+      # auto-deploy and fail with "service is not in RUNNING state."
+      #
+      # If you ever flip AutoDeploymentsEnabled to false on the staging service,
+      # add this step back:
+      #
+      #   - name: Trigger App Runner deploy
+      #     env:
+      #       SERVICE_ARN: ${{ secrets.APP_RUNNER_SERVICE_ARN_STAGING }}
+      #     run: aws apprunner start-deployment --service-arn $SERVICE_ARN
+      - name: Wait for App Runner auto-deploy to settle
         env:
           SERVICE_ARN: ${{ secrets.APP_RUNNER_SERVICE_ARN_STAGING }}
-        run: aws apprunner start-deployment --service-arn $SERVICE_ARN
+        run: |
+          for i in $(seq 1 20); do
+            STATUS=$(aws apprunner describe-service --service-arn "$SERVICE_ARN" --query 'Service.Status' --output text)
+            echo "  attempt $i: $STATUS"
+            [ "$STATUS" = "RUNNING" ] && exit 0
+            sleep 30
+          done
+          echo "::error::App Runner did not return to RUNNING within 10 minutes"
+          exit 1
