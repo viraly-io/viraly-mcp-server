@@ -66,6 +66,11 @@ registerTool({
         collectionId: input.collection_id,
         name: input.name,
         altText: input.alt_text,
+        // The API's CreateAttachmentFromUrlViewModel requires Role.
+        // From an MCP/LLM perspective, the only sensible role is the
+        // workspace media library — the other roles (PostAttachment,
+        // VideoThumbnail, PostCommentAttachment) are internal SPA flows.
+        role: 'MediaAttachment',
       },
     });
 
