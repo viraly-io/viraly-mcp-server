@@ -3,11 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "description": "Viraly Model Context Protocol server — connect Viraly to Claude, ChatGPT, Cursor, and other LLM clients.",
-  "license": "UNLICENSED",
+  "license": "MIT",
   "homepage": "https://viraly.io/mcp",
   "repository": {
     "type": "git",
-    "url": "https://github.com/viraly/viraly-mcp-server.git"
+    "url": "https://github.com/viraly-io/viraly-mcp-server.git"
   },
   "type": "module",
   "main": "./dist/server.js",
