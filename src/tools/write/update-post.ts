@@ -32,12 +32,30 @@ registerTool({
     const idempotencyKey = deriveIdempotencyKey('update_post', input, input.idempotency_key);
     const client = getClient({ idempotencyKey });
 
-    // Fetch current post to preserve the channel_id and other fields the API
-    // requires on update.
+    // Fetch current post to preserve channel_id and other fields the API
+    // requires on update. The Viraly API's CreatePostViewModel is reused for
+    // PUT and validates ScheduleAction against ScheduledAt — picking the
+    // right action based on the post's current status (and whether the
+    // caller is scheduling a draft) is what determines whether the request
+    // passes validation.
     const current = await client.call<PostDtoUpstream>({
       method: 'GET',
       path: `/api/platforms/posts/${encodeURIComponent(input.post_id)}`,
     });
+
+    if (current.status === 'Published') {
+      throw new Error('Cannot update a post that has already been published.');
+    }
+
+    // Decide ScheduleAction: keep drafts as drafts unless the caller is
+    // promoting them by passing scheduled_at; otherwise stay 'Schedule'.
+    const isDraft = current.status === 'Draft';
+    const promotingDraft = isDraft && input.scheduled_at != null;
+    const scheduleAction = isDraft && !promotingDraft ? 'SaveDraft' : 'Schedule';
+
+    // For 'Schedule', the API rejects null/past dates — reuse the existing
+    // scheduled time if the caller didn't supply a new one.
+    const scheduledAt = input.scheduled_at ?? current.scheduledAt ?? undefined;
 
     const post = await client.call<PostDtoUpstream>({
       method: 'PUT',
@@ -46,9 +64,9 @@ registerTool({
       body: {
         channelId: current.channelId,
         caption: input.caption ?? current.caption,
-        scheduledAt: input.scheduled_at ?? current.scheduledAt,
+        scheduledAt: scheduleAction === 'Schedule' ? scheduledAt : undefined,
         timezone: input.timezone,
-        scheduleAction: input.scheduled_at ? 'Schedule' : 'Schedule',
+        scheduleAction,
         categoryId: input.category_id,
         postAttachments:
           input.attachment_ids?.map((id, i) => ({ attachmentId: id, order: i })) ??

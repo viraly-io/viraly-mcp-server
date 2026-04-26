@@ -4,18 +4,7 @@ import { getClient } from '../../api/client-factory.js';
 import { registerTool } from '../registry.js';
 
 interface ChannelStatsUpstream {
-  channelId?: string;
-  followers?: number;
-  followersChange?: number;
-  posts?: number;
-  postsChange?: number;
-  engagementRate?: number;
-  engagementRateChange?: number;
-  reach?: number;
-  reachChange?: number;
-  impressions?: number;
-  impressionsChange?: number;
-  lastSyncedAt?: string;
+  postsCount?: number;
 }
 
 const inputSchema = z.object({
@@ -25,7 +14,7 @@ const inputSchema = z.object({
 registerTool({
   name: 'get_channel_analytics',
   description:
-    'Get aggregate analytics for a single channel — followers, post count, engagement rate, reach, impressions, plus period-over-period change. Use this for "how is my Instagram doing?" or weekly status questions.',
+    'Get high-level stats for a channel — currently exposes the number of posts Viraly has scheduled or published for that channel. For per-platform metrics like followers, reach, engagement, or impressions, use get_post_insights (per-post breakdown) or trigger_analytics_sync followed by get_post_analytics on individual posts.',
   inputSchema,
   handler: async (input) => {
     const client = getClient();
@@ -36,17 +25,7 @@ registerTool({
 
     return {
       channel_id: input.channel_id,
-      followers: stats.followers,
-      followers_change: stats.followersChange,
-      posts: stats.posts,
-      posts_change: stats.postsChange,
-      engagement_rate: stats.engagementRate,
-      engagement_rate_change: stats.engagementRateChange,
-      reach: stats.reach,
-      reach_change: stats.reachChange,
-      impressions: stats.impressions,
-      impressions_change: stats.impressionsChange,
-      last_synced_at: stats.lastSyncedAt,
+      posts_count: stats.postsCount ?? 0,
     };
   },
 });
