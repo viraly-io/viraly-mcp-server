@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { getClient } from '../../api/client-factory.js';
 import { mapPost, type PostDtoUpstream } from '../read/_post-shape.js';
 import { registerTool } from '../registry.js';
+import { toUtcIso } from './_datetime.js';
 import { deriveIdempotencyKey } from './_idempotency.js';
 
 const inputSchema = z.object({
@@ -54,8 +55,9 @@ registerTool({
     const scheduleAction = isDraft && !promotingDraft ? 'SaveDraft' : 'Schedule';
 
     // For 'Schedule', the API rejects null/past dates — reuse the existing
-    // scheduled time if the caller didn't supply a new one.
-    const scheduledAt = input.scheduled_at ?? current.scheduledAt ?? undefined;
+    // scheduled time if the caller didn't supply a new one. Only caller input
+    // is UTC-normalized; the API's own value round-trips as-is.
+    const scheduledAt = toUtcIso(input.scheduled_at) ?? current.scheduledAt ?? undefined;
 
     const post = await client.call<PostDtoUpstream>({
       method: 'PUT',
@@ -67,7 +69,12 @@ registerTool({
         scheduledAt: scheduleAction === 'Schedule' ? scheduledAt : undefined,
         timezone: input.timezone,
         scheduleAction,
-        categoryId: input.category_id,
+        // The API only consumes the plural categoryIds (PostService reads
+        // model.CategoryIds; the singular CategoryId on the view model is
+        // dead). UpdatePost also wipes ALL existing category links and
+        // re-adds only what's in categoryIds — so a caption-only edit must
+        // echo back the post's current categories or they're lost.
+        categoryIds: input.category_id ? [input.category_id] : (current.categoryIds ?? []),
         // Inherit the post's existing attachments when the caller didn't
         // specify a new list. The API returns them under `postAttachments`
         // (each with a nested `attachment.id`); the old `attachmentIds`

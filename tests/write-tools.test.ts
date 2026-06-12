@@ -148,6 +148,26 @@ describe('schedule_post', () => {
     expect(headers['Idempotency-Key']).toMatch(/^[a-f0-9]{32}$/);
   });
 
+  it('normalizes offset datetimes to UTC Z before sending', async () => {
+    // Non-Z offsets parse to DateTimeKind.Local in the .NET API and crash
+    // TimeZoneInfo.ConvertTimeFromUtc with a 500 (PostService.FindMatchingSlotAsync).
+    mockResponse(200, { id: 'p1', channelId: 'ch1', status: 'Scheduled' });
+    const tool = findTool('schedule_post');
+    await runWithTokenContext({ accessToken: 'vat_abc' }, async () =>
+      tool.handler({
+        channel_id: 'ch1',
+        caption: 'hello',
+        scheduled_at: '2026-06-12T15:00:00+02:00',
+        add_to_queue: false,
+        timezone: 'Europe/Skopje',
+        dry_run: false,
+      }),
+    );
+    const [, options] = mockedRequest.mock.calls[0]!;
+    const body = JSON.parse((options as { body: string }).body);
+    expect(body.scheduledAt).toBe('2026-06-12T13:00:00.000Z');
+  });
+
   it('add_to_queue routes to AddToQueue ScheduleAction', async () => {
     mockResponse(200, { id: 'p1' });
     const tool = findTool('schedule_post');

@@ -1,16 +1,13 @@
 import { z } from 'zod';
 
 import { getClient } from '../../api/client-factory.js';
+import { type AttachmentUpstream } from '../read/_post-shape.js';
 import { registerTool } from '../registry.js';
 import { deriveIdempotencyKey } from './_idempotency.js';
 
-interface AttachmentDtoUpstream {
+/** The generate-image endpoint returns a full AttachmentDto. */
+interface AttachmentDtoUpstream extends AttachmentUpstream {
   id: string;
-  url?: string;
-  thumbnailUrl?: string;
-  width?: number;
-  height?: number;
-  type?: string;
 }
 
 const inputSchema = z.object({
@@ -60,12 +57,14 @@ registerTool({
       },
     });
 
+    // AttachmentDto nests file metadata under info and thumbnails — there are
+    // no top-level url/width/etc fields on the wire.
     return {
       attachment_id: attachment.id,
-      url: attachment.url,
-      thumbnail_url: attachment.thumbnailUrl,
-      width: attachment.width,
-      height: attachment.height,
+      url: attachment.info?.url,
+      thumbnail_url: attachment.thumbnails?.medium?.url ?? attachment.thumbnails?.small?.url,
+      width: attachment.info?.width,
+      height: attachment.info?.height,
       type: attachment.type,
     };
   },

@@ -1,45 +1,34 @@
 import { z } from 'zod';
 
 import { getClient } from '../../api/client-factory.js';
+import { type AttachmentUpstream } from '../read/_post-shape.js';
 import { registerTool } from '../registry.js';
 import { deriveIdempotencyKey } from './_idempotency.js';
 import { assertSafeMediaUrl, MediaUrlError } from './_url-guard.js';
 
-interface AttachmentDtoUpstream {
+/** The from-url endpoint returns a full AttachmentDto. */
+interface AttachmentDtoUpstream extends AttachmentUpstream {
   id: string;
-  name?: string;
-  type?: string;
-  url?: string;
-  thumbnailUrl?: string;
-  width?: number;
-  height?: number;
-  durationSeconds?: number;
-  sizeBytes?: number;
 }
 
+// Note: the API's CreateAttachmentFromUrlViewModel only accepts
+// Id/Url/Role/SocialSetId — there is no collection, name, or alt-text
+// support on this endpoint. Earlier versions of this tool advertised
+// collection_id/name/alt_text inputs that the API silently dropped;
+// they were removed rather than lie to the model.
 const inputSchema = z.object({
   url: z
     .string()
     .min(1)
     .describe('Public HTTPS URL of the image or video to upload to the media library.'),
   social_set_id: z.string().min(1).describe('Social set the media belongs to.'),
-  collection_id: z
-    .string()
-    .optional()
-    .describe('Optional. Media collection (folder) id; defaults to the workspace default.'),
-  name: z
-    .string()
-    .max(255)
-    .optional()
-    .describe('Optional friendly name; defaults to the URL filename.'),
-  alt_text: z.string().max(1024).optional().describe('Accessibility text for screen readers.'),
   idempotency_key: z.string().optional(),
 });
 
 registerTool({
   name: 'upload_media',
   description:
-    'Download an image or video from a public URL and store it in the workspace\'s media library, returning an attachment id you can pass to schedule_post or create_draft. Rejects URLs pointing to private or reserved IP ranges.',
+    'Download an image or video from a public URL and store it in the workspace\'s media library, returning an attachment id you can pass to schedule_post or create_draft. The upload is not assigned to a media collection (folder) — reference it by the returned id rather than via list_media. Rejects URLs pointing to private or reserved IP ranges.',
   inputSchema,
   isWrite: true,
   handler: async (input) => {
@@ -63,9 +52,6 @@ registerTool({
       body: {
         url: safeUrl.toString(),
         socialSetId: input.social_set_id,
-        collectionId: input.collection_id,
-        name: input.name,
-        altText: input.alt_text,
         // The API's CreateAttachmentFromUrlViewModel requires Role.
         // From an MCP/LLM perspective, the only sensible role is the
         // workspace media library — the other roles (PostAttachment,
@@ -74,16 +60,18 @@ registerTool({
       },
     });
 
+    // AttachmentDto nests file metadata under info and thumbnails — there are
+    // no top-level url/width/etc fields on the wire.
     return {
       id: attachment.id,
-      name: attachment.name,
+      name: attachment.info?.fileName,
       type: attachment.type,
-      url: attachment.url,
-      thumbnail_url: attachment.thumbnailUrl,
-      width: attachment.width,
-      height: attachment.height,
-      duration_seconds: attachment.durationSeconds,
-      size_bytes: attachment.sizeBytes,
+      url: attachment.info?.url,
+      thumbnail_url: attachment.thumbnails?.medium?.url ?? attachment.thumbnails?.small?.url,
+      width: attachment.info?.width,
+      height: attachment.info?.height,
+      duration_seconds: attachment.info?.duration,
+      size_bytes: attachment.info?.fileSize,
     };
   },
 });

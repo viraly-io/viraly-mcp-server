@@ -19,6 +19,14 @@ const inputSchema = z.object({
   idempotency_key: z.string().optional(),
 });
 
+// The API stores this string verbatim (UpdateTimezoneViewModel has no
+// validation) and later feeds it to TimeZoneInfo.FindSystemTimeZoneById when
+// scheduling — an invalid id (Windows ids like "Eastern Standard Time", typos
+// like "America/NewYork") poisons every subsequent schedule/queue call for the
+// social set with a 500. Validate against the runtime's IANA database before
+// letting anything through.
+const SUPPORTED_TIMEZONES = new Set<string>([...Intl.supportedValuesOf('timeZone'), 'UTC']);
+
 registerTool({
   name: 'update_social_set_timezone',
   description:
@@ -26,6 +34,13 @@ registerTool({
   inputSchema,
   isWrite: true,
   handler: async (input) => {
+    if (!SUPPORTED_TIMEZONES.has(input.timezone)) {
+      throw new Error(
+        `Invalid timezone "${input.timezone}". Use an IANA timezone identifier ` +
+          '(e.g. "America/New_York", "Europe/London", "UTC"). Call list_timezones to see valid values.',
+      );
+    }
+
     const idempotencyKey = deriveIdempotencyKey(
       'update_social_set_timezone',
       input,

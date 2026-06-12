@@ -20,7 +20,9 @@ registerTool({
       path: `/api/platforms/posts/${encodeURIComponent(input.post_id)}`,
     });
 
-    if (!post.metrics) {
+    // PostMetricsDto carries hasData — a freshly published post can have a
+    // non-null metrics object with no platform data yet. Treat both the same.
+    if (!post.metrics || post.metrics.hasData === false) {
       return {
         post_id: post.id,
         status: post.status,
@@ -29,12 +31,16 @@ registerTool({
       };
     }
 
+    const platform = post.config?.channelType;
+
     return {
       post_id: post.id,
-      platform: post.channelType,
-      published_at: post.publishedAt,
+      platform,
+      // PostDto exposes no publish timestamp; for published posts the
+      // scheduled time is the closest available value.
+      published_at: post.status === 'Published' ? post.scheduledAt ?? null : null,
       external_url: post.externalUrl,
-      metrics: mapMetrics(post.metrics),
+      metrics: mapMetrics(post.metrics, platform),
     };
   },
 });

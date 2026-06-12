@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { getClient } from '../../api/client-factory.js';
 import { mapPost, type PostDtoUpstream } from '../read/_post-shape.js';
 import { registerTool } from '../registry.js';
+import { toUtcIso } from './_datetime.js';
 import { deriveIdempotencyKey } from './_idempotency.js';
 
 const inputSchema = z.object({
@@ -61,6 +62,7 @@ registerTool({
     }
 
     const idempotencyKey = deriveIdempotencyKey('schedule_post', input, input.idempotency_key);
+    const scheduledAtUtc = toUtcIso(input.scheduled_at);
 
     if (input.dry_run) {
       return {
@@ -68,7 +70,7 @@ registerTool({
         would_create: {
           channel_id: input.channel_id,
           caption: input.caption,
-          scheduled_at: input.scheduled_at,
+          scheduled_at: scheduledAtUtc,
           add_to_queue: input.add_to_queue,
           attachment_count: input.attachment_ids?.length ?? 0,
           category_id: input.category_id,
@@ -86,10 +88,12 @@ registerTool({
       body: {
         channelId: input.channel_id,
         caption: input.caption,
-        scheduledAt: input.scheduled_at,
+        scheduledAt: scheduledAtUtc,
         timezone: input.timezone,
         scheduleAction: input.add_to_queue ? 'AddToQueue' : 'Schedule',
-        categoryId: input.category_id,
+        // The API only reads the plural categoryIds; the singular categoryId
+        // binds to a dead view-model property and is silently ignored.
+        categoryIds: input.category_id ? [input.category_id] : undefined,
         postAttachments:
           input.attachment_ids?.map((id, i) => ({ attachmentId: id, order: i })) ?? [],
       },

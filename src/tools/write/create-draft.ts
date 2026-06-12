@@ -32,7 +32,9 @@ registerTool({
         caption: input.caption,
         timezone: input.timezone,
         scheduleAction: 'SaveDraft',
-        categoryId: input.category_id,
+        // The API only reads the plural categoryIds; the singular categoryId
+        // binds to a dead view-model property and is silently ignored.
+        categoryIds: input.category_id ? [input.category_id] : undefined,
         postAttachments:
           input.attachment_ids?.map((id, i) => ({ attachmentId: id, order: i })) ?? [],
       },

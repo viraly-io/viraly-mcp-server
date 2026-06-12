@@ -2,19 +2,11 @@ import { z } from 'zod';
 
 import { getClient } from '../../api/client-factory.js';
 import { registerTool } from '../registry.js';
+import { type AttachmentUpstream } from './_post-shape.js';
 
-interface AttachmentDtoUpstream {
+/** The media endpoint returns full AttachmentDto items. */
+interface AttachmentDtoUpstream extends AttachmentUpstream {
   id: string;
-  name?: string;
-  type?: string;
-  url?: string;
-  thumbnailUrl?: string;
-  width?: number;
-  height?: number;
-  durationSeconds?: number;
-  sizeBytes?: number;
-  isFavorite?: boolean;
-  createdAt?: string;
 }
 
 const inputSchema = z.object({
@@ -52,17 +44,20 @@ registerTool({
 
     return {
       count: items.length,
+      // AttachmentDto nests file metadata under info and thumbnails, and
+      // signals favorites via favoriteAt — there are no top-level
+      // url/name/isFavorite fields on the wire.
       items: items.map((m) => ({
         id: m.id,
-        name: m.name,
+        name: m.info?.fileName,
         type: m.type,
-        url: m.url,
-        thumbnail_url: m.thumbnailUrl,
-        width: m.width,
-        height: m.height,
-        duration_seconds: m.durationSeconds,
-        size_bytes: m.sizeBytes,
-        is_favorite: m.isFavorite ?? false,
+        url: m.info?.url,
+        thumbnail_url: m.thumbnails?.medium?.url ?? m.thumbnails?.small?.url,
+        width: m.info?.width,
+        height: m.info?.height,
+        duration_seconds: m.info?.duration,
+        size_bytes: m.info?.fileSize,
+        is_favorite: m.favoriteAt != null,
         created_at: m.createdAt,
       })),
     };

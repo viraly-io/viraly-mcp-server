@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { getClient } from '../../api/client-factory.js';
 import { mapPost, type PostDtoUpstream } from '../read/_post-shape.js';
 import { registerTool } from '../registry.js';
+import { toUtcIso } from './_datetime.js';
 import { deriveIdempotencyKey } from './_idempotency.js';
 
 const inputSchema = z.object({
@@ -37,7 +38,7 @@ registerTool({
       path: `/api/platforms/posts/${encodeURIComponent(input.post_id)}/schedule`,
       idempotent: true,
       body: {
-        scheduledAt: input.scheduled_at,
+        scheduledAt: toUtcIso(input.scheduled_at),
         timezone: input.timezone,
       },
     });

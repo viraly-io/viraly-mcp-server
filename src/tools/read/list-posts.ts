@@ -25,12 +25,12 @@ const inputSchema = z.object({
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}$/)
     .optional()
-    .describe('Optional inclusive lower bound, YYYY-MM-DD.'),
+    .describe('Optional inclusive lower bound on the post creation date, YYYY-MM-DD.'),
   end_date: z
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}$/)
     .optional()
-    .describe('Optional inclusive upper bound, YYYY-MM-DD.'),
+    .describe('Optional inclusive upper bound on the post creation date, YYYY-MM-DD.'),
   sort: z
     .enum(['CreatedAt', 'ScheduledAt', 'PublishedAt'])
     .default('CreatedAt')

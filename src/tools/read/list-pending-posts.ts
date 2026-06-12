@@ -21,12 +21,16 @@ const inputSchema = z.object({
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}$/, 'YYYY-MM-DD')
     .optional()
-    .describe('Optional inclusive lower bound for scheduled date, format YYYY-MM-DD.'),
+    .describe(
+      'Optional inclusive lower bound, format YYYY-MM-DD. Note: filters on the date the post was CREATED, not the scheduled date — a post scheduled in this window but created earlier will not match.',
+    ),
   end_date: z
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}$/, 'YYYY-MM-DD')
     .optional()
-    .describe('Optional inclusive upper bound for scheduled date, format YYYY-MM-DD.'),
+    .describe(
+      'Optional inclusive upper bound, format YYYY-MM-DD. Filters on the post creation date, not the scheduled date.',
+    ),
   page: z.number().int().min(1).default(1).describe('Page number, 1-based.'),
   per_page: z.number().int().min(1).max(100).default(25).describe('Page size, max 100.'),
 });

@@ -82,7 +82,7 @@ registerTool({
         thumbnail_url: p.thumbnailUrl ?? null,
         attachment_count: p.attachmentCount ?? 0,
         attachment_type: p.attachmentType ?? null,
-        metrics: p.metrics ? mapMetrics(p.metrics) : null,
+        metrics: p.metrics ? mapMetrics(p.metrics, input.platform) : null,
       })),
     };
   },
