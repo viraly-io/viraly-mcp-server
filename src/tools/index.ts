@@ -18,6 +18,7 @@ import './read/list-hashtag-groups.js';
 import './read/list-categories.js';
 import './read/list-social-sets.js';
 import './read/list-timezones.js';
+import './read/get-media-requirements.js';
 import './read/list-biolinks.js';
 import './read/list-biolink-subscribers.js';
 import './read/get-workspace-info.js';

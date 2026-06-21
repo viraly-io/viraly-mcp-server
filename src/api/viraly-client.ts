@@ -143,11 +143,25 @@ function mapErrorResponse(status: number, body: unknown): ViralyApiError {
   if (status >= 500) {
     return new ViralyTransientError(`Upstream returned ${status}`, status);
   }
-  const message =
-    (body && typeof body === 'object' && 'message' in body && typeof body.message === 'string'
-      ? body.message
-      : null) ?? `Upstream returned ${status}`;
+  // The Viraly API returns validation failures as `{ errors: [...] }` (e.g. per-platform
+  // media-requirement messages) and only sometimes a top-level `message`. Surface the full
+  // errors list so the model sees the actionable reason (wrong dimensions, file too large,
+  // caption too long, too many hashtags, …) and can fix the media/caption and retry —
+  // rather than a generic "Upstream returned 400".
+  const message = extractErrorMessage(body) ?? `Upstream returned ${status}`;
   return new ViralyApiError(message, status, 'upstream_error', body);
+}
+
+function extractErrorMessage(body: unknown): string | null {
+  if (!body || typeof body !== 'object') return null;
+  const obj = body as Record<string, unknown>;
+  const errors = obj.errors;
+  if (Array.isArray(errors)) {
+    const list = errors.filter((e): e is string => typeof e === 'string' && e.length > 0);
+    if (list.length > 0) return list.join(' ');
+  }
+  if (typeof obj.message === 'string' && obj.message.length > 0) return obj.message;
+  return null;
 }
 
 function extractMissingScope(body: unknown): string | undefined {

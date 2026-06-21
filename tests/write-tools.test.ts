@@ -82,10 +82,10 @@ describe('write tools registered', () => {
     );
   });
 
-  it('total tool count is 32 (17 read + 15 write)', () => {
+  it('total tool count is 33 (18 read + 15 write)', () => {
     const tools = listRegisteredTools();
-    expect(tools.length).toBe(32);
-    expect(tools.filter((t) => !t.isWrite).length).toBe(17);
+    expect(tools.length).toBe(33);
+    expect(tools.filter((t) => !t.isWrite).length).toBe(18);
     expect(tools.filter((t) => t.isWrite).length).toBe(15);
   });
 });
@@ -166,6 +166,56 @@ describe('schedule_post', () => {
     const [, options] = mockedRequest.mock.calls[0]!;
     const body = JSON.parse((options as { body: string }).body);
     expect(body.scheduledAt).toBe('2026-06-12T13:00:00.000Z');
+  });
+
+  it('surfaces the API validation errors[] verbatim so the model can fix and retry', async () => {
+    // The API returns media/caption validation failures as { errors: [...] }; the model
+    // must see the actionable text, not a generic "Upstream returned 400".
+    mockResponse(400, {
+      statusCode: 400,
+      errors: [
+        'Image aspect ratio must be between 3:4 and 1.91:1.',
+        'Instagram allows a maximum of 5 hashtags per post. Found 8.',
+      ],
+    });
+    const tool = findTool('schedule_post');
+    await expect(
+      runWithTokenContext({ accessToken: 'vat_abc' }, async () =>
+        tool.handler({
+          channel_id: 'ch1',
+          caption: 'hello',
+          scheduled_at: '2026-05-01T12:00:00Z',
+          attachment_ids: ['att1'],
+          add_to_queue: false,
+          timezone: 'UTC',
+          dry_run: false,
+        }),
+      ),
+    ).rejects.toThrow(/aspect ratio.*maximum of 5 hashtags/s);
+  });
+
+  it('prefers errors[] over the generic top-level message', async () => {
+    // The Platform API always sets message to the generic "Bad Request"; the real reasons
+    // are in errors[]. The model must get the reasons, not "Bad Request".
+    mockResponse(400, {
+      statusCode: 400,
+      message: 'Bad Request',
+      errors: ['Video file size can\'t exceed 512MB - Found 700.00MB.'],
+    });
+    const tool = findTool('schedule_post');
+    await expect(
+      runWithTokenContext({ accessToken: 'vat_abc' }, async () =>
+        tool.handler({
+          channel_id: 'ch1',
+          caption: 'hi',
+          scheduled_at: '2026-05-01T12:00:00Z',
+          attachment_ids: ['att1'],
+          add_to_queue: false,
+          timezone: 'UTC',
+          dry_run: false,
+        }),
+      ),
+    ).rejects.toThrow(/Video file size can't exceed 512MB/);
   });
 
   it('add_to_queue routes to AddToQueue ScheduleAction', async () => {
