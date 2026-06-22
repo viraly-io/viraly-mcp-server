@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { getClient } from '../../api/client-factory.js';
 import { mapPost, type PostDtoUpstream } from '../read/_post-shape.js';
 import { registerTool } from '../registry.js';
+import { attachmentIdsInput, attachmentsInput, buildPostAttachments } from './_attachments.js';
 import { toUtcIso } from './_datetime.js';
 import { dedupeWrite, deriveIdempotencyKey } from './_idempotency.js';
 
@@ -17,7 +18,8 @@ const inputSchema = z.object({
       'Optional ISO 8601 datetime with offset for where the draft appears on the calendar. ' +
       'The draft is NOT published or scheduled — this only positions it. Defaults to now if omitted.',
     ),
-  attachment_ids: z.array(z.string().min(1)).optional(),
+  attachment_ids: attachmentIdsInput,
+  attachments: attachmentsInput,
   category_id: z.string().optional(),
   timezone: z.string().default('UTC'),
   idempotency_key: z.string().optional(),
@@ -28,7 +30,7 @@ const SUPPORTED_TIMEZONES = new Set<string>([...Intl.supportedValuesOf('timeZone
 registerTool({
   name: 'create_draft',
   description:
-    'Save a draft post (no publish, no schedule). Useful when the user wants to compose now and finalize later. The draft appears in list_drafts and on the calendar (at scheduled_at, or today if omitted) — it is never auto-published.',
+    'Save a draft post (no publish, no schedule). Useful when the user wants to compose now and finalize later. The draft appears in list_drafts and on the calendar (at scheduled_at, or today if omitted) — it is never auto-published. To set accessibility alt text on media, pass `attachments` (with per-item alt_text) instead of attachment_ids.',
   inputSchema,
   isWrite: true,
   handler: async (input) => {
@@ -56,8 +58,7 @@ registerTool({
           // The API only reads the plural categoryIds; the singular categoryId
           // binds to a dead view-model property and is silently ignored.
           categoryIds: input.category_id ? [input.category_id] : undefined,
-          postAttachments:
-            input.attachment_ids?.map((id, i) => ({ attachmentId: id, order: i })) ?? [],
+          postAttachments: buildPostAttachments(input) ?? [],
         },
       }),
     );

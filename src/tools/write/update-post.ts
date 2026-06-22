@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { getClient } from '../../api/client-factory.js';
 import { mapPost, type PostDtoUpstream } from '../read/_post-shape.js';
 import { registerTool } from '../registry.js';
+import { attachmentIdsInput, attachmentsInput, buildPostAttachments } from './_attachments.js';
 import { toUtcIso } from './_datetime.js';
 import { dedupeWrite, deriveIdempotencyKey } from './_idempotency.js';
 
@@ -26,10 +27,8 @@ const inputSchema = z.object({
     .datetime({ offset: true })
     .optional()
     .describe('New scheduled time as ISO 8601 with offset.'),
-  attachment_ids: z
-    .array(z.string().min(1))
-    .optional()
-    .describe('Replace the attachment list.'),
+  attachment_ids: attachmentIdsInput,
+  attachments: attachmentsInput,
   category_id: z.string().optional().describe('Replace the category id.'),
   timezone: z.string().default('UTC'),
   idempotency_key: z.string().optional(),
@@ -38,7 +37,7 @@ const inputSchema = z.object({
 registerTool({
   name: 'update_post',
   description:
-    'Update an existing scheduled post — change the caption, schedule time, attachments, or category. Provide only the fields you want to change. Cannot update a post that has already been published.',
+    'Update an existing scheduled post — change the caption, schedule time, attachments, or category. Provide only the fields you want to change. Cannot update a post that has already been published. To set or change accessibility alt text on media, pass `attachments` (with per-item alt_text) instead of attachment_ids; existing alt text is preserved when you leave attachments unchanged.',
   inputSchema,
   isWrite: true,
   handler: async (input) => {
@@ -139,12 +138,12 @@ registerTool({
           // re-adds only what's in categoryIds — so a caption-only edit must
           // echo back the post's current categories or they're lost.
           categoryIds: input.category_id ? [input.category_id] : (current.categoryIds ?? []),
-          // Inherit the post's existing attachments when the caller didn't
-          // specify a new list. The API returns them under `postAttachments`
-          // (each with a nested `attachment.id`); the old `attachmentIds`
-          // fallback is kept for any consumer that still serializes it.
+          // Inherit the post's existing attachments (preserving their alt text)
+          // when the caller didn't specify a new list. The API returns them under
+          // `postAttachments` (each with a nested `attachment.id`); the old
+          // `attachmentIds` fallback is kept for any consumer that still serializes it.
           postAttachments:
-            input.attachment_ids?.map((id, i) => ({ attachmentId: id, order: i })) ??
+            buildPostAttachments(input) ??
             current.postAttachments
               ?.flatMap((a, i) => {
                 const attachmentId = a.attachment?.id;

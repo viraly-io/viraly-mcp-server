@@ -240,6 +240,101 @@ describe('schedule_post', () => {
     const body = JSON.parse((options as { body: string }).body);
     expect(body.scheduleAction).toBe('AddToQueue');
   });
+
+  it('sends per-attachment alt text from the attachments input', async () => {
+    mockResponse(200, { id: 'p1', channelId: 'ch1', status: 'Scheduled' });
+    const tool = findTool('schedule_post');
+    await runWithTokenContext({ accessToken: 'vat_abc' }, async () =>
+      tool.handler({
+        channel_id: 'ch1',
+        caption: 'pic',
+        scheduled_at: '2026-05-01T12:00:00Z',
+        attachments: [
+          { id: 'att1', alt_text: 'A red bicycle leaning on a wall' },
+          { id: 'att2' },
+        ],
+        add_to_queue: false,
+        timezone: 'UTC',
+        dry_run: false,
+      }),
+    );
+    const [, options] = mockedRequest.mock.calls[0]!;
+    const body = JSON.parse((options as { body: string }).body);
+    expect(body.postAttachments).toEqual([
+      { attachmentId: 'att1', order: 0, altText: 'A red bicycle leaning on a wall' },
+      { attachmentId: 'att2', order: 1 },
+    ]);
+  });
+
+  it('prefers attachments over attachment_ids when both are given', async () => {
+    mockResponse(200, { id: 'p1', channelId: 'ch1', status: 'Scheduled' });
+    const tool = findTool('schedule_post');
+    await runWithTokenContext({ accessToken: 'vat_abc' }, async () =>
+      tool.handler({
+        channel_id: 'ch1',
+        caption: 'pic',
+        scheduled_at: '2026-05-01T12:00:00Z',
+        attachment_ids: ['legacy'],
+        attachments: [{ id: 'att1', alt_text: 'desc' }],
+        add_to_queue: false,
+        timezone: 'UTC',
+        dry_run: false,
+      }),
+    );
+    const [, options] = mockedRequest.mock.calls[0]!;
+    const body = JSON.parse((options as { body: string }).body);
+    expect(body.postAttachments).toEqual([
+      { attachmentId: 'att1', order: 0, altText: 'desc' },
+    ]);
+  });
+});
+
+describe('update_post alt text', () => {
+  it('preserves existing attachment alt text on a caption-only edit', async () => {
+    // Regression: replacing attachments used to drop altText; a caption-only
+    // edit (no attachments input) must echo back the post's existing alt text.
+    mockResponse(200, {
+      id: 'p1',
+      channelId: 'ch1',
+      status: 'Draft',
+      caption: 'old',
+      postAttachments: [{ attachment: { id: 'att1' }, order: 0, altText: 'A red bicycle' }],
+    });
+    mockResponse(200, { id: 'p1', channelId: 'ch1', status: 'Draft' });
+    const tool = findTool('update_post');
+    await runWithTokenContext({ accessToken: 'vat_abc' }, async () =>
+      tool.handler({ post_id: 'p1', caption: 'new caption', timezone: 'UTC' }),
+    );
+    const [, putOptions] = mockedRequest.mock.calls[1]!;
+    const body = JSON.parse((putOptions as { body: string }).body);
+    expect(body.postAttachments).toEqual([
+      { attachmentId: 'att1', order: 0, altText: 'A red bicycle' },
+    ]);
+  });
+
+  it('sets new alt text via the attachments input', async () => {
+    mockResponse(200, {
+      id: 'p1',
+      channelId: 'ch1',
+      status: 'Draft',
+      caption: 'old',
+      postAttachments: [{ attachment: { id: 'att1' }, order: 0 }],
+    });
+    mockResponse(200, { id: 'p1', channelId: 'ch1', status: 'Draft' });
+    const tool = findTool('update_post');
+    await runWithTokenContext({ accessToken: 'vat_abc' }, async () =>
+      tool.handler({
+        post_id: 'p1',
+        attachments: [{ id: 'att1', alt_text: 'Now described' }],
+        timezone: 'UTC',
+      }),
+    );
+    const [, putOptions] = mockedRequest.mock.calls[1]!;
+    const body = JSON.parse((putOptions as { body: string }).body);
+    expect(body.postAttachments).toEqual([
+      { attachmentId: 'att1', order: 0, altText: 'Now described' },
+    ]);
+  });
 });
 
 describe('cancel_post', () => {

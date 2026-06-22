@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { getClient } from '../../api/client-factory.js';
 import { mapPost, type PostDtoUpstream } from '../read/_post-shape.js';
 import { registerTool } from '../registry.js';
+import { attachmentIdsInput, attachmentsInput, buildPostAttachments } from './_attachments.js';
 import { toUtcIso } from './_datetime.js';
 import { dedupeWrite, deriveIdempotencyKey } from './_idempotency.js';
 
@@ -27,10 +28,8 @@ const inputSchema = z.object({
     .boolean()
     .default(false)
     .describe('When true, ignore scheduled_at and add the post to the channel\'s default queue.'),
-  attachment_ids: z
-    .array(z.string().min(1))
-    .optional()
-    .describe('Optional. IDs of media-library attachments to include (use list_media or upload_media to obtain).'),
+  attachment_ids: attachmentIdsInput,
+  attachments: attachmentsInput,
   category_id: z.string().optional().describe('Optional. Category / content queue id.'),
   timezone: z
     .string()
@@ -55,7 +54,7 @@ const SUPPORTED_TIMEZONES = new Set<string>([...Intl.supportedValuesOf('timeZone
 registerTool({
   name: 'schedule_post',
   description:
-    'Schedule a new social post to a single channel. Provide either scheduled_at (specific time) or add_to_queue=true (next slot in the channel\'s default queue). For multi-channel publishing, call this tool once per channel.',
+    'Schedule a new social post to a single channel. Provide either scheduled_at (specific time) or add_to_queue=true (next slot in the channel\'s default queue). For multi-channel publishing, call this tool once per channel. To set accessibility alt text on media, pass `attachments` (with per-item alt_text) instead of attachment_ids.',
   inputSchema,
   isWrite: true,
   handler: async (input) => {
@@ -80,7 +79,7 @@ registerTool({
           caption: input.caption,
           scheduled_at: scheduledAtUtc,
           add_to_queue: input.add_to_queue,
-          attachment_count: input.attachment_ids?.length ?? 0,
+          attachment_count: buildPostAttachments(input)?.length ?? 0,
           category_id: input.category_id,
           timezone: input.timezone,
         },
@@ -105,8 +104,7 @@ registerTool({
           // The API only reads the plural categoryIds; the singular categoryId
           // binds to a dead view-model property and is silently ignored.
           categoryIds: input.category_id ? [input.category_id] : undefined,
-          postAttachments:
-            input.attachment_ids?.map((id, i) => ({ attachmentId: id, order: i })) ?? [],
+          postAttachments: buildPostAttachments(input) ?? [],
         },
       }),
     );
