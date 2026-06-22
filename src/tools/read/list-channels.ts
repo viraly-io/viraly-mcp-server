@@ -15,7 +15,9 @@ interface ChannelDto {
   name: string;
   type: string;
   socialSetId?: string;
-  isLocked?: boolean;
+  // ChannelDto.Status is a ChannelStatus enum serialized as a string
+  // (Active | Expired | Disabled | Locked). There is no `isLocked` field.
+  status?: string;
   pictureUrl?: string;
 }
 
@@ -39,7 +41,8 @@ registerTool({
         name: c.name,
         platform: c.type,
         social_set_id: c.socialSetId,
-        is_locked: c.isLocked ?? false,
+        status: c.status,
+        is_locked: c.status === 'Locked',
         picture_url: c.pictureUrl,
       })),
     };

@@ -30,6 +30,36 @@ const RESERVED_HOSTNAMES = new Set([
   'metadata.azure.com',
 ]);
 
+/**
+ * Returns true if an IPv4 literal falls in a private/reserved/link-local range
+ * that must never be reachable from a server-side fetch.
+ */
+function isPrivateIpv4(ipv4: string): boolean {
+  return PRIVATE_IPV4_PATTERNS.some((p) => p.test(ipv4));
+}
+
+/**
+ * If an (already lower-cased, bracket-stripped) IPv6 host embeds an IPv4
+ * address — either IPv4-mapped (::ffff:1.2.3.4 / ::ffff:0102:0304) or
+ * IPv4-compatible (::1.2.3.4) — return that IPv4 in dotted-quad form so it can
+ * be range-checked. Returns null when no IPv4 is embedded.
+ */
+function extractMappedIpv4(host: string): string | null {
+  // Dotted-quad tail, e.g. ::ffff:169.254.169.254 or ::1.2.3.4
+  const dotted = host.match(/(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})$/);
+  if (dotted) return dotted[1]!;
+
+  // Hex-encoded IPv4-mapped form, e.g. ::ffff:a9fe:a9fe (= 169.254.169.254).
+  const hex = host.match(/^::ffff:([0-9a-f]{1,4}):([0-9a-f]{1,4})$/);
+  if (hex) {
+    const high = parseInt(hex[1]!, 16);
+    const low = parseInt(hex[2]!, 16);
+    return [high >> 8, high & 0xff, low >> 8, low & 0xff].join('.');
+  }
+
+  return null;
+}
+
 export function assertSafeMediaUrl(rawUrl: string): URL {
   let url: URL;
   try {
@@ -54,14 +84,29 @@ export function assertSafeMediaUrl(rawUrl: string): URL {
 
   const ipKind = isIP(host);
   if (ipKind === 4) {
-    if (PRIVATE_IPV4_PATTERNS.some((p) => p.test(host))) {
+    if (isPrivateIpv4(host)) {
       throw new MediaUrlError(`URL points to a private IP range: ${host}`);
     }
   }
   if (ipKind === 6) {
-    // Block link-local (fe80::/10), unique-local (fc00::/7, fd00::/8), loopback (::1).
-    if (host === '::1' || host.startsWith('fe80:') || host.startsWith('fc') || host.startsWith('fd')) {
+    // Block loopback (::1) and the unspecified address (::).
+    if (host === '::1' || host === '::') {
       throw new MediaUrlError(`URL points to a private IPv6 range: ${host}`);
+    }
+    // Block link-local (fe80::/10) and unique-local (fc00::/7 → fc/fd prefix).
+    if (host.startsWith('fe80:') || host.startsWith('fc') || host.startsWith('fd')) {
+      throw new MediaUrlError(`URL points to a private IPv6 range: ${host}`);
+    }
+    // Block IPv4-mapped / IPv4-compatible IPv6 forms that smuggle a private
+    // IPv4 target past the IPv6 checks, e.g. ::ffff:169.254.169.254,
+    // ::ffff:10.0.0.1, or ::ffff:c0a8:0001 (hex-encoded 192.168.0.1). Node's
+    // isIP() classifies all of these as kind 6, so without this they would
+    // otherwise be treated as a benign public IPv6 address.
+    const mappedIpv4 = extractMappedIpv4(host);
+    if (mappedIpv4) {
+      if (isPrivateIpv4(mappedIpv4)) {
+        throw new MediaUrlError(`URL points to a private IP range: ${mappedIpv4}`);
+      }
     }
   }
 

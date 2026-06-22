@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 import { getClient } from '../../api/client-factory.js';
 import { registerTool } from '../registry.js';
-import { deriveIdempotencyKey } from './_idempotency.js';
+import { dedupeWrite, deriveIdempotencyKey } from './_idempotency.js';
 
 const inputSchema = z.object({
   platform: z
@@ -58,25 +58,35 @@ registerTool({
     // so we always get the CSV text back as a string here. We re-encode to
     // base64 so the LLM doesn't accidentally truncate or mangle multi-line
     // text when echoing the value.
-    const csv = await client.call<string>({
-      method: 'POST',
-      path: `/api/platforms/analytics/export/${encodeURIComponent(input.platform)}`,
-      idempotent: true,
-      body: {
-        channelId: input.channel_id,
-        postMetrics: input.post_metrics,
-        startDate: input.start_date,
-        endDate: input.end_date,
-      },
-    });
+    // The upstream does NOT honor Idempotency-Key, so dedupeWrite collapses a
+    // retry of this expensive export into the cached result rather than
+    // re-running the report generation.
+    const csv = await dedupeWrite(idempotencyKey, () =>
+      client.call<string>({
+        method: 'POST',
+        path: `/api/platforms/analytics/export/${encodeURIComponent(input.platform)}`,
+        idempotent: true,
+        body: {
+          channelId: input.channel_id,
+          postMetrics: input.post_metrics,
+          startDate: input.start_date,
+          endDate: input.end_date,
+        },
+      }),
+    );
 
     const csvText = typeof csv === 'string' ? csv : JSON.stringify(csv);
     const csvBase64 = Buffer.from(csvText, 'utf8').toString('base64');
 
+    // Sanitize values used in the suggested filename so a crafted channel_id/platform
+    // can't inject path separators, CRLF, or other control characters if a caller
+    // writes it to disk or a Content-Disposition header.
+    const safe = (s: string) => s.replace(/[^A-Za-z0-9._-]/g, '_').slice(0, 64) || 'export';
+
     return {
       platform: input.platform,
       channel_id: input.channel_id,
-      filename: `${input.platform}-${input.channel_id}-analytics.csv`,
+      filename: `${safe(input.platform)}-${safe(input.channel_id)}-analytics.csv`,
       csv_base64: csvBase64,
       csv_byte_length: Buffer.byteLength(csvText, 'utf8'),
     };

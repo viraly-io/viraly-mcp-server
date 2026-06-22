@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { getClient } from '../../api/client-factory.js';
 import { type AttachmentUpstream } from '../read/_post-shape.js';
 import { registerTool } from '../registry.js';
-import { deriveIdempotencyKey } from './_idempotency.js';
+import { dedupeWrite, deriveIdempotencyKey } from './_idempotency.js';
 import { assertSafeMediaUrl, MediaUrlError } from './_url-guard.js';
 
 /** The from-url endpoint returns a full AttachmentDto. */
@@ -45,20 +45,24 @@ registerTool({
     const idempotencyKey = deriveIdempotencyKey('upload_media', input, input.idempotency_key);
     const client = getClient({ idempotencyKey });
 
-    const attachment = await client.call<AttachmentDtoUpstream>({
-      method: 'POST',
-      path: '/api/platforms/attachments/from-url',
-      idempotent: true,
-      body: {
-        url: safeUrl.toString(),
-        socialSetId: input.social_set_id,
-        // The API's CreateAttachmentFromUrlViewModel requires Role.
-        // From an MCP/LLM perspective, the only sensible role is the
-        // workspace media library — the other roles (PostAttachment,
-        // VideoThumbnail, PostCommentAttachment) are internal SPA flows.
-        role: 'MediaAttachment',
-      },
-    });
+    // The upstream does NOT honor Idempotency-Key, so dedupeWrite is the only
+    // protection against a retry re-downloading and re-uploading the media.
+    const attachment = await dedupeWrite(idempotencyKey, () =>
+      client.call<AttachmentDtoUpstream>({
+        method: 'POST',
+        path: '/api/platforms/attachments/from-url',
+        idempotent: true,
+        body: {
+          url: safeUrl.toString(),
+          socialSetId: input.social_set_id,
+          // The API's CreateAttachmentFromUrlViewModel requires Role.
+          // From an MCP/LLM perspective, the only sensible role is the
+          // workspace media library — the other roles (PostAttachment,
+          // VideoThumbnail, PostCommentAttachment) are internal SPA flows.
+          role: 'MediaAttachment',
+        },
+      }),
+    );
 
     // AttachmentDto nests file metadata under info and thumbnails — there are
     // no top-level url/width/etc fields on the wire.

@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { getClient } from '../../api/client-factory.js';
 import { registerTool } from '../registry.js';
 import { deriveIdempotencyKey } from './_idempotency.js';
+import { assertSafeMediaUrl, MediaUrlError } from './_url-guard.js';
 
 interface UrlPreviewUpstream {
   title?: string | null;
@@ -29,6 +30,19 @@ registerTool({
   inputSchema,
   isWrite: true,
   handler: async (input) => {
+    // SSRF guard: the API fetches this URL server-side, so reject private/
+    // reserved/link-local/metadata targets (and non-https schemes) at the MCP
+    // layer before forwarding. Mirrors upload_media's protection.
+    let safeUrl: URL;
+    try {
+      safeUrl = assertSafeMediaUrl(input.url);
+    } catch (err) {
+      if (err instanceof MediaUrlError) {
+        throw new Error(`Refusing to fetch URL: ${err.message}`);
+      }
+      throw err;
+    }
+
     const idempotencyKey = deriveIdempotencyKey(
       'get_url_preview',
       input,
@@ -40,7 +54,7 @@ registerTool({
       method: 'POST',
       path: '/api/platforms/url-preview',
       idempotent: true,
-      body: { url: input.url },
+      body: { url: safeUrl.toString() },
     });
 
     return {

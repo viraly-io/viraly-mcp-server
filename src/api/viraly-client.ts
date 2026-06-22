@@ -3,6 +3,7 @@ import { request } from 'undici';
 import type { ServerConfig } from '../config.js';
 import { upstreamCallCounter } from '../observability/metrics.js';
 import {
+  ViralyAmbiguousWriteError,
   ViralyApiError,
   ViralyAuthError,
   ViralyPlanLimitError,
@@ -96,6 +97,28 @@ export class ViralyClient {
       if (err instanceof ViralyApiError) throw err;
       // Undici aborts, ECONNRESET, DNS, etc.
       const message = err instanceof Error ? err.message : 'Unknown upstream error';
+
+      // A client-side timeout/abort on a mutating request is ambiguous: the
+      // upstream write may have already completed (quota decremented, post
+      // created) even though we never received the response. Surface a
+      // NON-retryable error so the model verifies state before retrying —
+      // because the Idempotency-Key header is not yet honored upstream, a
+      // blind retry would duplicate the write / double-charge quota.
+      const isWriteMethod = options.method !== 'GET';
+      const isTimeoutOrAbort =
+        err instanceof Error &&
+        /timeout|aborted|abort|UND_ERR_(HEADERS_TIMEOUT|BODY_TIMEOUT)/i.test(
+          `${err.name} ${err.message}`,
+        );
+      if (isWriteMethod && isTimeoutOrAbort) {
+        throw new ViralyAmbiguousWriteError(
+          `Upstream ${options.method} timed out after ${this.timeoutMs}ms; ` +
+            'the operation may have completed. Verify current state (e.g. list the ' +
+            'resource) before retrying — retrying blindly can create a duplicate or ' +
+            're-consume quota.',
+        );
+      }
+
       throw new ViralyTransientError(`Upstream call failed: ${message}`, 502);
     } finally {
       upstreamCallCounter.inc({

@@ -48,3 +48,17 @@ export class ViralyTransientError extends ViralyApiError {
     this.name = 'ViralyTransientError';
   }
 }
+
+/**
+ * A client-side timeout/abort occurred on a non-idempotent write. The upstream
+ * operation may have completed (e.g. an image was generated and quota was
+ * decremented) even though we never saw the response — so a blind retry can
+ * double-charge or create duplicates. This is deliberately NOT a transient
+ * (retryable) error: the model must verify state before retrying.
+ */
+export class ViralyAmbiguousWriteError extends ViralyApiError {
+  constructor(message: string) {
+    super(message, 504, 'ambiguous_write_timeout');
+    this.name = 'ViralyAmbiguousWriteError';
+  }
+}

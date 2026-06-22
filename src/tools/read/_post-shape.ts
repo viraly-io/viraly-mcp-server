@@ -62,7 +62,12 @@ export interface PostConfigUpstream {
 export interface PostDtoUpstream {
   id: string;
   caption?: string;
+  /** Raw transient PostStatus (Draft|PendingApproval|Scheduled|Processing*|
+   *  Publishing*|Published|...). Use displayStatus for the user-facing,
+   *  filterable vocabulary the tools document. */
   status?: string;
+  /** PostDisplayStatus: Draft|PendingApproval|Scheduled|Published|Failed. */
+  displayStatus?: string;
   channelId?: string;
   createdAt?: string;
   scheduledAt?: string | null;
@@ -128,16 +133,21 @@ export function mapPost(post: PostDtoUpstream): Record<string, unknown> {
 
   const platform = post.config?.channelType;
 
+  // The tools document and filter on the DisplayStatus vocabulary
+  // (Draft|PendingApproval|Scheduled|Published|Failed). Surface that, falling
+  // back to the raw transient status only if displayStatus is absent.
+  const status = post.displayStatus ?? post.status;
+
   return {
     id: post.id,
     caption: post.caption ?? '',
-    status: post.status,
+    status,
     channel_id: post.channelId,
     platform,
     scheduled_at: post.scheduledAt ?? null,
     // PostDto exposes no publish timestamp; for published posts the scheduled
     // time is the closest available value.
-    published_at: post.status === 'Published' ? post.scheduledAt ?? null : null,
+    published_at: status === 'Published' ? post.scheduledAt ?? null : null,
     external_url: post.externalUrl,
     error_message: errorMessage || null,
     category_ids: post.categoryIds ?? [],

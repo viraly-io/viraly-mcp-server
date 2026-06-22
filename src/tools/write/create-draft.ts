@@ -4,7 +4,7 @@ import { getClient } from '../../api/client-factory.js';
 import { mapPost, type PostDtoUpstream } from '../read/_post-shape.js';
 import { registerTool } from '../registry.js';
 import { toUtcIso } from './_datetime.js';
-import { deriveIdempotencyKey } from './_idempotency.js';
+import { dedupeWrite, deriveIdempotencyKey } from './_idempotency.js';
 
 const inputSchema = z.object({
   channel_id: z.string().min(1).describe('The channel id the draft is for.'),
@@ -23,6 +23,8 @@ const inputSchema = z.object({
   idempotency_key: z.string().optional(),
 });
 
+const SUPPORTED_TIMEZONES = new Set<string>([...Intl.supportedValuesOf('timeZone'), 'UTC']);
+
 registerTool({
   name: 'create_draft',
   description:
@@ -30,25 +32,35 @@ registerTool({
   inputSchema,
   isWrite: true,
   handler: async (input) => {
+    if (!SUPPORTED_TIMEZONES.has(input.timezone)) {
+      throw new Error(
+        `Invalid timezone "${input.timezone}". Use an IANA timezone identifier ` +
+          '(e.g. "America/New_York", "Europe/London", "UTC"). Call list_timezones to see valid values.',
+      );
+    }
     const idempotencyKey = deriveIdempotencyKey('create_draft', input, input.idempotency_key);
     const client = getClient({ idempotencyKey });
-    const post = await client.call<PostDtoUpstream>({
-      method: 'POST',
-      path: '/api/platforms/posts',
-      idempotent: true,
-      body: {
-        channelId: input.channel_id,
-        caption: input.caption,
-        scheduledAt: toUtcIso(input.scheduled_at),
-        timezone: input.timezone,
-        scheduleAction: 'SaveDraft',
-        // The API only reads the plural categoryIds; the singular categoryId
-        // binds to a dead view-model property and is silently ignored.
-        categoryIds: input.category_id ? [input.category_id] : undefined,
-        postAttachments:
-          input.attachment_ids?.map((id, i) => ({ attachmentId: id, order: i })) ?? [],
-      },
-    });
+    // The upstream does NOT honor Idempotency-Key, so dedupeWrite is the only
+    // protection against a model/client retry creating a duplicate draft.
+    const post = await dedupeWrite(idempotencyKey, () =>
+      client.call<PostDtoUpstream>({
+        method: 'POST',
+        path: '/api/platforms/posts',
+        idempotent: true,
+        body: {
+          channelId: input.channel_id,
+          caption: input.caption,
+          scheduledAt: toUtcIso(input.scheduled_at),
+          timezone: input.timezone,
+          scheduleAction: 'SaveDraft',
+          // The API only reads the plural categoryIds; the singular categoryId
+          // binds to a dead view-model property and is silently ignored.
+          categoryIds: input.category_id ? [input.category_id] : undefined,
+          postAttachments:
+            input.attachment_ids?.map((id, i) => ({ attachmentId: id, order: i })) ?? [],
+        },
+      }),
+    );
 
     return mapPost(post);
   },

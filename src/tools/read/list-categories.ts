@@ -3,13 +3,16 @@ import { z } from 'zod';
 import { getClient } from '../../api/client-factory.js';
 import { registerTool } from '../registry.js';
 
+// Mirrors CategoryDto: { id, name, color, sortOrder, createdAt, updatedAt,
+// postCount }. There are no description/icon fields on the wire.
 interface CategoryDtoUpstream {
   id: string;
   name?: string;
-  description?: string;
   color?: string;
-  icon?: string;
-  order?: number;
+  sortOrder?: number;
+  postCount?: number;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 const inputSchema = z.object({});
@@ -31,10 +34,11 @@ registerTool({
       categories: categories.map((c) => ({
         id: c.id,
         name: c.name,
-        description: c.description,
         color: c.color,
-        icon: c.icon,
-        order: c.order,
+        order: c.sortOrder,
+        post_count: c.postCount,
+        created_at: c.createdAt,
+        updated_at: c.updatedAt,
       })),
     };
   },

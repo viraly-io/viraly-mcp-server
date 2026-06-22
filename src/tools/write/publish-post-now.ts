@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { getClient } from '../../api/client-factory.js';
 import { mapPost, type PostDtoUpstream } from '../read/_post-shape.js';
 import { registerTool } from '../registry.js';
-import { deriveIdempotencyKey } from './_idempotency.js';
+import { dedupeWrite, deriveIdempotencyKey } from './_idempotency.js';
 
 const inputSchema = z.object({
   post_id: z.string().min(1).describe('The id of the post (or draft) to publish immediately.'),
@@ -24,11 +24,15 @@ registerTool({
     );
     const client = getClient({ idempotencyKey });
 
-    const post = await client.call<PostDtoUpstream>({
-      method: 'POST',
-      path: `/api/platforms/posts/${encodeURIComponent(input.post_id)}/publish`,
-      idempotent: true,
-    });
+    // The upstream does NOT honor Idempotency-Key, so dedupeWrite is the only
+    // protection against a retry triggering a second publish of the same post.
+    const post = await dedupeWrite(idempotencyKey, () =>
+      client.call<PostDtoUpstream>({
+        method: 'POST',
+        path: `/api/platforms/posts/${encodeURIComponent(input.post_id)}/publish`,
+        idempotent: true,
+      }),
+    );
 
     return mapPost(post);
   },

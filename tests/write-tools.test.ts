@@ -11,7 +11,10 @@ import { runWithTokenContext } from '../src/auth/token-context.js';
 import { listRegisteredTools } from '../src/tools/registry.js';
 import '../src/tools/index.js';
 import { assertSafeMediaUrl, MediaUrlError } from '../src/tools/write/_url-guard.js';
-import { deriveIdempotencyKey } from '../src/tools/write/_idempotency.js';
+import {
+  __clearDedupeCacheForTests,
+  deriveIdempotencyKey,
+} from '../src/tools/write/_idempotency.js';
 
 const mockedRequest = undiciRequest as unknown as ReturnType<typeof vi.fn>;
 
@@ -40,6 +43,9 @@ beforeEach(() => {
     rateLimitPerMinute: 300,
   });
   mockedRequest.mockReset();
+  // Writes are now wrapped in the in-process dedupe cache; clear it between
+  // tests so cases that reuse identical inputs still issue a fresh call.
+  __clearDedupeCacheForTests();
 });
 
 afterEach(() => {
@@ -290,6 +296,29 @@ describe('upload_media SSRF guard', () => {
     expect(() => assertSafeMediaUrl('https://[fe80::1]/x')).toThrow(MediaUrlError);
   });
 
+  it('rejects IPv6 loopback ::1 and unspecified ::', () => {
+    expect(() => assertSafeMediaUrl('https://[::1]/x')).toThrow(MediaUrlError);
+    expect(() => assertSafeMediaUrl('https://[::]/x')).toThrow(MediaUrlError);
+  });
+
+  it('rejects IPv4-mapped IPv6 to AWS metadata (dotted-quad form)', () => {
+    expect(() => assertSafeMediaUrl('https://[::ffff:169.254.169.254]/latest/meta-data/')).toThrow(
+      MediaUrlError,
+    );
+  });
+
+  it('rejects IPv4-mapped IPv6 to private ranges (dotted-quad form)', () => {
+    expect(() => assertSafeMediaUrl('https://[::ffff:10.0.0.1]/x')).toThrow(MediaUrlError);
+    expect(() => assertSafeMediaUrl('https://[::ffff:192.168.0.1]/x')).toThrow(MediaUrlError);
+    expect(() => assertSafeMediaUrl('https://[::ffff:127.0.0.1]/x')).toThrow(MediaUrlError);
+  });
+
+  it('rejects IPv4-mapped IPv6 in hex form (::ffff:a9fe:a9fe = 169.254.169.254)', () => {
+    expect(() => assertSafeMediaUrl('https://[::ffff:a9fe:a9fe]/x')).toThrow(MediaUrlError);
+    // ::ffff:c0a8:0001 = 192.168.0.1
+    expect(() => assertSafeMediaUrl('https://[::ffff:c0a8:0001]/x')).toThrow(MediaUrlError);
+  });
+
   it('upload_media tool rejects private IP at handler level', async () => {
     const tool = findTool('upload_media');
     await expect(
@@ -298,6 +327,38 @@ describe('upload_media SSRF guard', () => {
       ),
     ).rejects.toThrow(/Refusing to fetch/);
     expect(mockedRequest).not.toHaveBeenCalled();
+  });
+});
+
+describe('get_url_preview SSRF guard', () => {
+  it('rejects metadata endpoint before calling the API', async () => {
+    const tool = findTool('get_url_preview');
+    await expect(
+      runWithTokenContext({ accessToken: 'vat_abc' }, async () =>
+        tool.handler({ url: 'https://169.254.169.254/latest/meta-data/' }),
+      ),
+    ).rejects.toThrow(/Refusing to fetch/);
+    expect(mockedRequest).not.toHaveBeenCalled();
+  });
+
+  it('rejects IPv4-mapped IPv6 metadata target before calling the API', async () => {
+    const tool = findTool('get_url_preview');
+    await expect(
+      runWithTokenContext({ accessToken: 'vat_abc' }, async () =>
+        tool.handler({ url: 'https://[::ffff:169.254.169.254]/latest/meta-data/' }),
+      ),
+    ).rejects.toThrow(/Refusing to fetch/);
+    expect(mockedRequest).not.toHaveBeenCalled();
+  });
+
+  it('allows a public https URL', async () => {
+    mockResponse(200, { url: 'https://example.com', isSuccess: true, title: 'Example' });
+    const tool = findTool('get_url_preview');
+    const result = await runWithTokenContext({ accessToken: 'vat_abc' }, async () =>
+      tool.handler({ url: 'https://example.com' }),
+    );
+    expect(mockedRequest).toHaveBeenCalledTimes(1);
+    expect(result).toMatchObject({ url: 'https://example.com', success: true, title: 'Example' });
   });
 });
 
@@ -317,6 +378,45 @@ describe('idempotency key derivation', () => {
   it('explicit key is honored', () => {
     const a = deriveIdempotencyKey('schedule_post', { channel_id: 'ch1' }, 'EXPLICIT');
     expect(a).toBe('EXPLICIT');
+  });
+});
+
+describe('write dedupe (retries do not duplicate upstream writes)', () => {
+  it('schedule_post with identical inputs issues only one upstream call', async () => {
+    mockResponse(200, { id: 'p1', channelId: 'ch1', status: 'Scheduled' });
+    mockResponse(200, { id: 'p2', channelId: 'ch1', status: 'Scheduled' });
+    const tool = findTool('schedule_post');
+    const args = {
+      channel_id: 'ch1',
+      caption: 'dedupe me',
+      scheduled_at: '2026-05-01T12:00:00Z',
+      add_to_queue: false,
+      timezone: 'UTC',
+      dry_run: false,
+    };
+    const first = await runWithTokenContext({ accessToken: 'vat_abc' }, async () =>
+      tool.handler({ ...args }),
+    );
+    const second = await runWithTokenContext({ accessToken: 'vat_abc' }, async () =>
+      tool.handler({ ...args }),
+    );
+    expect(mockedRequest).toHaveBeenCalledTimes(1);
+    expect(second).toEqual(first);
+  });
+
+  it('upload_media with identical inputs issues only one upstream call', async () => {
+    mockResponse(200, { id: 'att1', info: { url: 'https://cdn/x.jpg' }, type: 'Photo' });
+    mockResponse(200, { id: 'att2', info: { url: 'https://cdn/y.jpg' }, type: 'Photo' });
+    const tool = findTool('upload_media');
+    const args = { url: 'https://example.com/x.jpg', social_set_id: 'ss1' };
+    const first = await runWithTokenContext({ accessToken: 'vat_abc' }, async () =>
+      tool.handler({ ...args }),
+    );
+    const second = await runWithTokenContext({ accessToken: 'vat_abc' }, async () =>
+      tool.handler({ ...args }),
+    );
+    expect(mockedRequest).toHaveBeenCalledTimes(1);
+    expect(second).toEqual(first);
   });
 });
 

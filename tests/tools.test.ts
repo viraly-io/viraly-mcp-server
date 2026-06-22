@@ -51,8 +51,8 @@ afterEach(() => {
 describe('list_channels', () => {
   it('forwards Authorization and maps DTOs', async () => {
     mockResponse(200, [
-      { id: 'ch1', name: 'My IG', type: 'instagram', socialSetId: 'ss1' },
-      { id: 'ch2', name: 'My X', type: 'twitter' },
+      { id: 'ch1', name: 'My IG', type: 'instagram', socialSetId: 'ss1', status: 'Active' },
+      { id: 'ch2', name: 'My X', type: 'twitter', status: 'Locked' },
     ]);
 
     const tool = findTool('list_channels');
@@ -75,6 +75,7 @@ describe('list_channels', () => {
           name: 'My IG',
           platform: 'instagram',
           social_set_id: 'ss1',
+          status: 'Active',
           is_locked: false,
           picture_url: undefined,
         },
@@ -83,11 +84,100 @@ describe('list_channels', () => {
           name: 'My X',
           platform: 'twitter',
           social_set_id: undefined,
-          is_locked: false,
+          status: 'Locked',
+          is_locked: true,
           picture_url: undefined,
         },
       ],
     });
+  });
+});
+
+describe('list_hashtag_groups', () => {
+  it('maps topic->name and splits the hashtags string into an array', async () => {
+    mockResponse(200, [
+      {
+        id: 'h1',
+        topic: 'Launch',
+        hashtags: '#viral #launch   #growth',
+        socialSetId: 'ss1',
+        createdAt: '2026-01-01T00:00:00Z',
+      },
+    ]);
+
+    const tool = findTool('list_hashtag_groups');
+    const result = await runWithTokenContext({ accessToken: 'vat_abc' }, async () =>
+      tool.handler({}),
+    );
+
+    expect(result).toEqual({
+      count: 1,
+      groups: [
+        {
+          id: 'h1',
+          name: 'Launch',
+          social_set_id: 'ss1',
+          hashtags: ['#viral', '#launch', '#growth'],
+          created_at: '2026-01-01T00:00:00Z',
+        },
+      ],
+    });
+  });
+});
+
+describe('list_categories', () => {
+  it('maps sortOrder->order and surfaces post_count, dropping phantom fields', async () => {
+    mockResponse(200, [
+      {
+        id: 'c1',
+        name: 'News',
+        color: '#ff0000',
+        sortOrder: 2,
+        postCount: 7,
+        createdAt: '2026-01-01T00:00:00Z',
+        updatedAt: '2026-02-01T00:00:00Z',
+      },
+    ]);
+
+    const tool = findTool('list_categories');
+    const result = await runWithTokenContext({ accessToken: 'vat_abc' }, async () =>
+      tool.handler({}),
+    );
+
+    expect(result).toEqual({
+      count: 1,
+      categories: [
+        {
+          id: 'c1',
+          name: 'News',
+          color: '#ff0000',
+          order: 2,
+          post_count: 7,
+          created_at: '2026-01-01T00:00:00Z',
+          updated_at: '2026-02-01T00:00:00Z',
+        },
+      ],
+    });
+  });
+});
+
+describe('get_post displayStatus mapping', () => {
+  it('prefers displayStatus over the raw transient status', async () => {
+    mockResponse(200, {
+      id: 'p1',
+      caption: 'hi',
+      status: 'PublishingEnqueued',
+      displayStatus: 'Scheduled',
+      channelId: 'ch1',
+      scheduledAt: '2026-05-01T10:00:00Z',
+    });
+
+    const tool = findTool('get_post');
+    const result = (await runWithTokenContext({ accessToken: 'vat_abc' }, async () =>
+      tool.handler({ post_id: 'p1' }),
+    )) as Record<string, unknown>;
+
+    expect(result.status).toBe('Scheduled');
   });
 });
 

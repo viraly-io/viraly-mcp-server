@@ -4,7 +4,9 @@ import { getClient } from '../../api/client-factory.js';
 import { mapPost, type PostDtoUpstream } from '../read/_post-shape.js';
 import { registerTool } from '../registry.js';
 import { toUtcIso } from './_datetime.js';
-import { deriveIdempotencyKey } from './_idempotency.js';
+import { dedupeWrite, deriveIdempotencyKey } from './_idempotency.js';
+
+const SUPPORTED_TIMEZONES = new Set<string>([...Intl.supportedValuesOf('timeZone'), 'UTC']);
 
 const inputSchema = z.object({
   post_id: z.string().min(1).describe('The id of the post to reschedule.'),
@@ -26,6 +28,13 @@ registerTool({
   inputSchema,
   isWrite: true,
   handler: async (input) => {
+    if (!SUPPORTED_TIMEZONES.has(input.timezone)) {
+      throw new Error(
+        `Invalid timezone "${input.timezone}". Use an IANA timezone identifier ` +
+          '(e.g. "America/New_York", "Europe/London", "UTC"). Call list_timezones to see valid values.',
+      );
+    }
+
     const idempotencyKey = deriveIdempotencyKey(
       'reschedule_post',
       input,
@@ -33,15 +42,17 @@ registerTool({
     );
     const client = getClient({ idempotencyKey });
 
-    const post = await client.call<PostDtoUpstream>({
-      method: 'PUT',
-      path: `/api/platforms/posts/${encodeURIComponent(input.post_id)}/schedule`,
-      idempotent: true,
-      body: {
-        scheduledAt: toUtcIso(input.scheduled_at),
-        timezone: input.timezone,
-      },
-    });
+    const post = await dedupeWrite(idempotencyKey, () =>
+      client.call<PostDtoUpstream>({
+        method: 'PUT',
+        path: `/api/platforms/posts/${encodeURIComponent(input.post_id)}/schedule`,
+        idempotent: true,
+        body: {
+          scheduledAt: toUtcIso(input.scheduled_at),
+          timezone: input.timezone,
+        },
+      }),
+    );
 
     return mapPost(post);
   },

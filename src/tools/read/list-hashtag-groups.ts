@@ -5,8 +5,10 @@ import { registerTool } from '../registry.js';
 
 interface HashtagDtoUpstream {
   id: string;
-  name?: string;
-  hashtags?: string[];
+  // HashtagDto carries the group name under `topic` and the hashtags as a
+  // single space/whitespace-delimited string, NOT an array.
+  topic?: string;
+  hashtags?: string;
   socialSetId?: string;
   createdAt?: string;
 }
@@ -35,9 +37,9 @@ registerTool({
       count: groups.length,
       groups: groups.map((g) => ({
         id: g.id,
-        name: g.name,
+        name: g.topic,
         social_set_id: g.socialSetId,
-        hashtags: g.hashtags ?? [],
+        hashtags: g.hashtags ? g.hashtags.split(/\s+/).filter(Boolean) : [],
         created_at: g.createdAt,
       })),
     };
