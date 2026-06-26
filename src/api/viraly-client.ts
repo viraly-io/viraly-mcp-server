@@ -171,7 +171,9 @@ function mapErrorResponse(status: number, body: unknown): ViralyApiError {
   // errors list so the model sees the actionable reason (wrong dimensions, file too large,
   // caption too long, too many hashtags, …) and can fix the media/caption and retry —
   // rather than a generic "Upstream returned 400".
-  const message = extractErrorMessage(body) ?? `Upstream returned ${status}`;
+  const message =
+    extractErrorMessage(body) ??
+    `Viraly rejected the request (HTTP ${status}) without giving a reason. Re-check this tool's inputs against its schema — ids exist, dates are valid ISO 8601, and required fields are set — before retrying.`;
   return new ViralyApiError(message, status, 'upstream_error', body);
 }
 

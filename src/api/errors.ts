@@ -27,9 +27,12 @@ export class ViralyAuthError extends ViralyApiError {
 
 /** 403 — the token is valid but lacks the scope for this operation. */
 export class ViralyScopeError extends ViralyApiError {
+  /** The specific scope the upstream said was missing, or 'unknown' if it didn't name one. */
+  readonly missingScope: string;
   constructor(missingScope: string) {
     super(`Missing required scope: ${missingScope}`, 403, 'insufficient_scope');
     this.name = 'ViralyScopeError';
+    this.missingScope = missingScope;
   }
 }
 

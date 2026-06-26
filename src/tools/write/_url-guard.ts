@@ -69,10 +69,10 @@ export function assertSafeMediaUrl(rawUrl: string): URL {
   }
 
   if (url.protocol !== 'https:' && url.protocol !== 'http:') {
-    throw new MediaUrlError(`URL must use http or https (got ${url.protocol})`);
+    throw new MediaUrlError(`URL scheme must be https (got ${url.protocol}). Provide a public https:// URL.`);
   }
   if (url.protocol === 'http:') {
-    throw new MediaUrlError('URL must use https');
+    throw new MediaUrlError('URL scheme must be https, not http. Provide a public https:// URL.');
   }
 
   // Strip IPv6 brackets that the URL parser preserves on hostname.

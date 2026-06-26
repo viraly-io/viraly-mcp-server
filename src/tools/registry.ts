@@ -89,14 +89,18 @@ function formatToolError(err: unknown): string {
     return 'Your Viraly access has expired or been revoked. Please reconnect Viraly to continue.';
   }
   if (err instanceof ViralyScopeError) {
-    return `This tool needs additional permission: ${err.message}. Reconnect Viraly and grant the requested scope.`;
+    return err.missingScope && err.missingScope !== 'unknown'
+      ? `This tool needs the Viraly "${err.missingScope}" permission, which your current connection doesn't grant. Reconnect Viraly and approve that access to use this tool.`
+      : `This tool needs a Viraly permission your current connection doesn't grant (the server didn't say which). Reconnect Viraly and approve all requested access.`;
   }
   if (err instanceof ViralyPlanLimitError) {
-    const detail =
+    const bodyMessage =
       err.upstreamBody && typeof err.upstreamBody === 'object' && 'message' in err.upstreamBody
         ? String((err.upstreamBody as Record<string, unknown>).message)
-        : err.message;
-    return `Plan limit reached: ${detail}. Upgrade at https://viraly.io/pricing to continue.`;
+        : '';
+    // Avoid "Plan limit reached: Plan limit reached" when the upstream gave no specific quota.
+    const detail = bodyMessage && bodyMessage !== 'Plan limit reached' ? ` (${bodyMessage})` : '';
+    return `You've reached a Viraly plan limit${detail}. Upgrade at https://viraly.io/pricing to continue.`;
   }
   if (err instanceof ViralyTransientError) {
     return `Viraly is temporarily unavailable (${err.status}). Please try again in a moment.`;
