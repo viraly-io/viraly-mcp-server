@@ -4,7 +4,7 @@ import { getClient } from '../../api/client-factory.js';
 import { mapPost, type PostDtoUpstream } from '../read/_post-shape.js';
 import { registerTool } from '../registry.js';
 import { attachmentIdsInput, attachmentsInput, buildPostAttachments } from './_attachments.js';
-import { toUtcIso } from './_datetime.js';
+import { toFutureUtcIso, toUtcIso } from './_datetime.js';
 import { dedupeWrite, deriveIdempotencyKey } from './_idempotency.js';
 
 const inputSchema = z.object({
@@ -69,7 +69,13 @@ registerTool({
     }
 
     const idempotencyKey = deriveIdempotencyKey('schedule_post', input, input.idempotency_key);
-    const scheduledAtUtc = toUtcIso(input.scheduled_at);
+    // When actually scheduling (not queueing), reject a past time here with a
+    // clear message instead of letting the API return MODEL_VALIDATION_FAILED.
+    // For add_to_queue the time is ignored, so don't block on it.
+    const scheduledAtUtc =
+      !input.add_to_queue && input.scheduled_at
+        ? toFutureUtcIso(input.scheduled_at)
+        : toUtcIso(input.scheduled_at);
 
     if (input.dry_run) {
       return {

@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { getClient } from '../../api/client-factory.js';
 import { mapPost, type PostDtoUpstream } from '../read/_post-shape.js';
 import { registerTool } from '../registry.js';
-import { toUtcIso } from './_datetime.js';
+import { toFutureUtcIso } from './_datetime.js';
 import { dedupeWrite, deriveIdempotencyKey } from './_idempotency.js';
 
 const SUPPORTED_TIMEZONES = new Set<string>([...Intl.supportedValuesOf('timeZone'), 'UTC']);
@@ -48,7 +48,7 @@ registerTool({
         path: `/api/platforms/posts/${encodeURIComponent(input.post_id)}/schedule`,
         idempotent: true,
         body: {
-          scheduledAt: toUtcIso(input.scheduled_at),
+          scheduledAt: toFutureUtcIso(input.scheduled_at),
           timezone: input.timezone,
         },
       }),

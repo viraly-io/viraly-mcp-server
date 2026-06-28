@@ -32,6 +32,10 @@ function mockResponse(status: number, body: unknown): void {
 }
 
 beforeEach(() => {
+  // Pin the clock before the 2026-05/06 fixtures below so they read as future
+  // times (the schedule/reschedule/update tools now reject past scheduled_at).
+  vi.useFakeTimers();
+  vi.setSystemTime(new Date('2026-01-01T00:00:00Z'));
   setConfig({
     transport: 'http',
     port: 8080,
@@ -50,6 +54,7 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.clearAllMocks();
+  vi.useRealTimers();
 });
 
 describe('write tools registered', () => {
@@ -110,6 +115,40 @@ describe('schedule_post', () => {
         }),
       ),
     ).rejects.toThrow();
+  });
+
+  it('rejects a past scheduled_at with a clear, actionable message (not the opaque API error)', async () => {
+    const tool = findTool('schedule_post');
+    await expect(
+      runWithTokenContext({ accessToken: 'vat_abc' }, async () =>
+        tool.handler({
+          channel_id: 'ch1',
+          caption: 'hello',
+          scheduled_at: '2025-01-01T12:00:00Z', // before the pinned 2026-01-01 clock
+          add_to_queue: false,
+          timezone: 'UTC',
+          dry_run: false,
+        }),
+      ),
+    ).rejects.toThrow(/in the past/i);
+    // Must never reach the API — it's caught client-side.
+    expect(mockedRequest).not.toHaveBeenCalled();
+  });
+
+  it('does not block a past scheduled_at when add_to_queue=true (time is ignored)', async () => {
+    mockResponse(200, { id: 'p1', channelId: 'ch1', status: 'Scheduled' });
+    const tool = findTool('schedule_post');
+    await runWithTokenContext({ accessToken: 'vat_abc' }, async () =>
+      tool.handler({
+        channel_id: 'ch1',
+        caption: 'hello',
+        scheduled_at: '2025-01-01T12:00:00Z',
+        add_to_queue: true,
+        timezone: 'UTC',
+        dry_run: false,
+      }),
+    );
+    expect(mockedRequest).toHaveBeenCalledTimes(1);
   });
 
   it('dry_run does not call the API', async () => {
@@ -334,6 +373,42 @@ describe('update_post alt text', () => {
     expect(body.postAttachments).toEqual([
       { attachmentId: 'att1', order: 0, altText: 'Now described' },
     ]);
+  });
+});
+
+describe('past-date scheduling guards', () => {
+  it('reschedule_post rejects a past scheduled_at before hitting the API', async () => {
+    const tool = findTool('reschedule_post');
+    await expect(
+      runWithTokenContext({ accessToken: 'vat_abc' }, async () =>
+        tool.handler({
+          post_id: 'p1',
+          scheduled_at: '2025-01-01T12:00:00Z',
+          timezone: 'UTC',
+        }),
+      ),
+    ).rejects.toThrow(/in the past/i);
+    expect(mockedRequest).not.toHaveBeenCalled();
+  });
+
+  it('update_post rejects a past caller-supplied scheduled_at', async () => {
+    // update_post GETs the current post first, then validates the new time.
+    mockResponse(200, {
+      id: 'p1',
+      channelId: 'ch1',
+      status: 'Scheduled',
+      scheduledAt: '2026-05-01T00:00:00Z',
+    });
+    const tool = findTool('update_post');
+    await expect(
+      runWithTokenContext({ accessToken: 'vat_abc' }, async () =>
+        tool.handler({
+          post_id: 'p1',
+          scheduled_at: '2025-01-01T12:00:00Z',
+          timezone: 'UTC',
+        }),
+      ),
+    ).rejects.toThrow(/in the past/i);
   });
 });
 

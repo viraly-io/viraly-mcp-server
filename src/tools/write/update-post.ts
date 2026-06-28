@@ -4,7 +4,7 @@ import { getClient } from '../../api/client-factory.js';
 import { mapPost, type PostDtoUpstream } from '../read/_post-shape.js';
 import { registerTool } from '../registry.js';
 import { attachmentIdsInput, attachmentsInput, buildPostAttachments } from './_attachments.js';
-import { toUtcIso } from './_datetime.js';
+import { toFutureUtcIso } from './_datetime.js';
 import { dedupeWrite, deriveIdempotencyKey } from './_idempotency.js';
 
 const SUPPORTED_TIMEZONES = new Set<string>([...Intl.supportedValuesOf('timeZone'), 'UTC']);
@@ -105,7 +105,9 @@ registerTool({
     // existing time has already elapsed (e.g. a Scheduled post whose slot
     // passed), echoing it back fails validation with "Post date can't be in
     // the past". Detect that and require an explicit scheduled_at instead.
-    const callerScheduledAt = toUtcIso(input.scheduled_at);
+    // A caller-supplied time must be in the future — reject a past value with a
+    // clear message rather than forwarding it for an opaque MODEL_VALIDATION_FAILED.
+    const callerScheduledAt = input.scheduled_at ? toFutureUtcIso(input.scheduled_at) : undefined;
     let scheduledAt = callerScheduledAt ?? current.scheduledAt ?? undefined;
 
     if (scheduleAction === 'Schedule' && callerScheduledAt == null) {
