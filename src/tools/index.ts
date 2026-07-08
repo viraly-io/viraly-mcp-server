@@ -14,6 +14,7 @@ import './read/get-post-analytics.js';
 import './read/get-post-insights.js';
 import './read/get-channel-analytics.js';
 import './read/list-media.js';
+import './read/list-media-collections.js';
 import './read/list-hashtag-groups.js';
 import './read/list-categories.js';
 import './read/list-social-sets.js';

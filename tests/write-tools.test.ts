@@ -93,10 +93,10 @@ describe('write tools registered', () => {
     );
   });
 
-  it('total tool count is 33 (18 read + 15 write)', () => {
+  it('total tool count is 34 (19 read + 15 write)', () => {
     const tools = listRegisteredTools();
-    expect(tools.length).toBe(33);
-    expect(tools.filter((t) => !t.isWrite).length).toBe(18);
+    expect(tools.length).toBe(34);
+    expect(tools.filter((t) => !t.isWrite).length).toBe(19);
     expect(tools.filter((t) => t.isWrite).length).toBe(15);
   });
 });

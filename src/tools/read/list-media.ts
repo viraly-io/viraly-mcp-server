@@ -11,7 +11,10 @@ interface AttachmentDtoUpstream extends AttachmentUpstream {
 
 const inputSchema = z.object({
   social_set_id: z.string().min(1).describe('Required. The social set whose media library to read.'),
-  collection_id: z.string().min(1).describe('Required. The media collection (folder) id.'),
+  collection_id: z
+    .string()
+    .min(1)
+    .describe('Required. The media collection (folder) id — obtain it from list_media_collections.'),
   type: z
     .enum(['Photo', 'Video'])
     .optional()
@@ -50,7 +53,10 @@ registerTool({
       items: items.map((m) => ({
         id: m.id,
         name: m.info?.fileName,
+        // "Photo" | "Video" | "Document".
         type: m.type,
+        // "Completed" when ready to attach to a post.
+        status: m.status,
         url: m.info?.url,
         thumbnail_url: m.thumbnails?.medium?.url ?? m.thumbnails?.small?.url,
         width: m.info?.width,

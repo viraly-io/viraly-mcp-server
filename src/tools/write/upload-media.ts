@@ -28,7 +28,13 @@ const inputSchema = z.object({
 registerTool({
   name: 'upload_media',
   description:
-    'Download an image or video from a public URL and store it in the workspace\'s media library, returning an attachment id you can pass to schedule_post or create_draft. The upload is not assigned to a media collection (folder) — reference it by the returned id rather than via list_media. Rejects URLs pointing to private or reserved IP ranges.',
+    'Download an image or video from a public URL and store it in the workspace\'s media library. ' +
+    'Returns the attachment { id, type, status, ... }: pass the id into schedule_post / create_draft / update_post ' +
+    'via their `attachment_ids` (or `attachments` for per-item alt text). The media is ready to attach once ' +
+    '`status` is "Completed" (from-url uploads process synchronously, so it normally returns Completed already). ' +
+    'The upload is not assigned to a media collection (folder) — reference it by the returned id rather than via list_media. ' +
+    'Check get_media_requirements for per-platform size/format/duration limits before uploading. ' +
+    'Rejects URLs pointing to private or reserved IP ranges.',
   inputSchema,
   isWrite: true,
   handler: async (input) => {
@@ -69,7 +75,11 @@ registerTool({
     return {
       id: attachment.id,
       name: attachment.info?.fileName,
+      // "Photo" | "Video" | "Document".
       type: attachment.type,
+      // "Completed" when ready to attach; anything else means still processing.
+      status: attachment.status,
+      ready: attachment.status === 'Completed',
       url: attachment.info?.url,
       thumbnail_url: attachment.thumbnails?.medium?.url ?? attachment.thumbnails?.small?.url,
       width: attachment.info?.width,
