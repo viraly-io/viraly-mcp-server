@@ -41,6 +41,13 @@ const inputSchema = z.object({
         'rejected with a clear error. Feed posts auto-derive their concrete type from the media ' +
         '(multiple photos become a carousel; a video on an Instagram feed publishes as a reel).',
     ),
+  board_id: z
+    .string()
+    .optional()
+    .describe(
+      'Pinterest only. The board to pin to — required when posting to a Pinterest channel. ' +
+        'Discover board ids with list_pinterest_boards.',
+    ),
   category_id: z.string().optional().describe('Optional. Category / content queue id.'),
   timezone: z
     .string()
@@ -120,6 +127,7 @@ registerTool({
           timezone: input.timezone,
           scheduleAction: input.add_to_queue ? 'AddToQueue' : 'Schedule',
           postType: toApiPostType(input.post_type),
+          boardId: input.board_id,
           // The API only reads the plural categoryIds; the singular categoryId
           // binds to a dead view-model property and is silently ignored.
           categoryIds: input.category_id ? [input.category_id] : undefined,

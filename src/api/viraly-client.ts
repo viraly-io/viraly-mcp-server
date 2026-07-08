@@ -161,6 +161,17 @@ function mapErrorResponse(status: number, body: unknown): ViralyApiError {
     return new ViralyScopeError(scope);
   }
   if (status === 429) {
+    // Two very different 429s share the status code: the per-minute API rate
+    // limiter (body: { error, retryAfterSeconds }) and plan-quota exhaustion.
+    // Telling the model to "upgrade the plan" for a transient throttle steers
+    // the user toward a purchase they don't need — surface a retry hint instead.
+    const retryAfter = extractRetryAfterSeconds(body);
+    if (retryAfter != null) {
+      return new ViralyTransientError(
+        `Rate limited by the Viraly API. Wait ${retryAfter} seconds, then retry.`,
+        status,
+      );
+    }
     return new ViralyPlanLimitError('Plan limit reached', body);
   }
   if (status >= 500) {
@@ -187,6 +198,12 @@ function extractErrorMessage(body: unknown): string | null {
   }
   if (typeof obj.message === 'string' && obj.message.length > 0) return obj.message;
   return null;
+}
+
+function extractRetryAfterSeconds(body: unknown): number | null {
+  if (!body || typeof body !== 'object') return null;
+  const value = (body as Record<string, unknown>).retryAfterSeconds;
+  return typeof value === 'number' && Number.isFinite(value) ? value : null;
 }
 
 function extractMissingScope(body: unknown): string | undefined {

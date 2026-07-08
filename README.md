@@ -28,6 +28,8 @@ Once connected, your AI assistant can drive Viraly using natural language:
 
 > *"Reschedule everything in the Promo queue from this week to next week."*
 
+> *"Post this clip as an Instagram story today and as a YouTube Short tomorrow morning."*
+
 The MCP server exposes **32+ tools** across reading, writing, analytics, and AI generation — see the [full tool catalog](#tool-catalog) below.
 
 ---
@@ -81,6 +83,7 @@ Any MCP-compliant client over Streamable HTTP works. Point it at `https://mcp.vi
 | `get_workspace_info` | Workspace name, plan tier (Free/Influencer/Business/Agency/Enterprise), status. |
 | `list_social_sets` | Multi-brand "social set" buckets — useful when an agency manages multiple clients in one workspace. |
 | `list_channels` | Every connected social account (Instagram, Facebook page, X, LinkedIn, etc.) with its channel id. |
+| `list_pinterest_boards` | Boards of a Pinterest channel — source of the `board_id` that Pinterest posting requires. |
 | `list_categories` | Content categories / queues configured in the workspace. |
 | `list_hashtag_groups` | Saved hashtag bundles. |
 | `list_timezones` | The IANA zone IDs Viraly accepts for scheduling. |
@@ -99,9 +102,9 @@ Any MCP-compliant client over Streamable HTTP works. Point it at `https://mcp.vi
 
 | Tool | Purpose |
 |---|---|
-| `schedule_post` | Schedule a post (specific time or next queue slot). Single channel per call; loop for multi-channel. |
-| `create_draft` | Save a draft without scheduling. |
-| `update_post` | Edit an existing post — caption, schedule, attachments, category. |
+| `schedule_post` | Schedule a post (specific time or next queue slot). Supports `post_type`: `feed` (default), `reel` (Facebook/Instagram), `story` (Facebook/Instagram), `short` (YouTube). Single channel per call; loop for multi-channel. |
+| `create_draft` | Save a draft without scheduling. Accepts the same `post_type` placement as `schedule_post`. |
+| `update_post` | Edit an existing post — caption, schedule, attachments, placement (`post_type`), category. The current placement is preserved unless you change it. |
 | `reschedule_post` | Lighter alternative to `update_post` when you only need to change the time. |
 | `publish_post_now` | Immediately publish a draft or scheduled post, bypassing the schedule. |
 | `cancel_post` | Cancel a scheduled post or delete a draft. |
@@ -111,6 +114,7 @@ Any MCP-compliant client over Streamable HTTP works. Point it at `https://mcp.vi
 | Tool | Purpose |
 |---|---|
 | `list_media` | Browse a media-library collection. |
+| `list_media_collections` | The collections (folders) in a social set — source of the `collection_id` that `list_media` requires. |
 | `upload_media` | Pull a remote URL into the media library and return an `attachment_id` usable in `schedule_post`. |
 
 ### Analytics

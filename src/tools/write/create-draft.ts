@@ -28,6 +28,13 @@ const inputSchema = z.object({
       'Placement of the post: "feed" (default), "reel" (Facebook/Instagram), "story" ' +
         '(Facebook/Instagram), "short" (YouTube). Other platforms support "feed" only.',
     ),
+  board_id: z
+    .string()
+    .optional()
+    .describe(
+      'Pinterest only. The board to pin to — required when drafting for a Pinterest channel. ' +
+        'Discover board ids with list_pinterest_boards.',
+    ),
   category_id: z.string().optional(),
   timezone: z.string().default('UTC'),
   idempotency_key: z.string().optional(),
@@ -64,6 +71,7 @@ registerTool({
           timezone: input.timezone,
           scheduleAction: 'SaveDraft',
           postType: toApiPostType(input.post_type),
+          boardId: input.board_id,
           // The API only reads the plural categoryIds; the singular categoryId
           // binds to a dead view-model property and is silently ignored.
           categoryIds: input.category_id ? [input.category_id] : undefined,

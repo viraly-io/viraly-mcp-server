@@ -93,10 +93,10 @@ describe('write tools registered', () => {
     );
   });
 
-  it('total tool count is 34 (19 read + 15 write)', () => {
+  it('total tool count is 35 (20 read + 15 write)', () => {
     const tools = listRegisteredTools();
-    expect(tools.length).toBe(34);
-    expect(tools.filter((t) => !t.isWrite).length).toBe(19);
+    expect(tools.length).toBe(35);
+    expect(tools.filter((t) => !t.isWrite).length).toBe(20);
     expect(tools.filter((t) => t.isWrite).length).toBe(15);
   });
 });
@@ -405,6 +405,87 @@ describe('post_type placement', () => {
     const [, putOptions] = mockedRequest.mock.calls[1]!;
     const body = JSON.parse((putOptions as { body: string }).body);
     expect(body.postType).toBe('Story');
+  });
+
+  it('update_post preserves a YouTube Short placement on a caption-only edit', async () => {
+    mockResponse(200, {
+      id: 'p1',
+      channelId: 'ch1',
+      status: 'Draft',
+      caption: 'old',
+      config: {
+        channelType: 'YouTube',
+        youTube: { contentOptions: { postType: 'ShortVideo', systemPostType: 'ShortVideo' } },
+      },
+    });
+    mockResponse(200, { id: 'p1', channelId: 'ch1', status: 'Draft' });
+    const tool = findTool('update_post');
+    await runWithTokenContext({ accessToken: 'vat_abc' }, async () =>
+      tool.handler({ post_id: 'p1', caption: 'new caption', timezone: 'UTC' }),
+    );
+    const [, putOptions] = mockedRequest.mock.calls[1]!;
+    const body = JSON.parse((putOptions as { body: string }).body);
+    expect(body.postType).toBe('Short');
+  });
+
+  it('update_post keeps a future draft calendar date on a caption-only edit', async () => {
+    // Regression: omitting scheduledAt on a SaveDraft update makes the API
+    // reset the draft's planned date to "now".
+    mockResponse(200, {
+      id: 'p1',
+      channelId: 'ch1',
+      status: 'Draft',
+      caption: 'old',
+      scheduledAt: '2026-06-01T09:00:00Z',
+    });
+    mockResponse(200, { id: 'p1', channelId: 'ch1', status: 'Draft' });
+    const tool = findTool('update_post');
+    await runWithTokenContext({ accessToken: 'vat_abc' }, async () =>
+      tool.handler({ post_id: 'p1', caption: 'new caption', timezone: 'UTC' }),
+    );
+    const [, putOptions] = mockedRequest.mock.calls[1]!;
+    const body = JSON.parse((putOptions as { body: string }).body);
+    expect(body.scheduleAction).toBe('SaveDraft');
+    expect(body.scheduledAt).toBe('2026-06-01T09:00:00Z');
+  });
+
+  it('schedule_post forwards board_id as boardId for Pinterest', async () => {
+    mockResponse(200, { id: 'p1', channelId: 'ch1', status: 'Scheduled' });
+    const tool = findTool('schedule_post');
+    await runWithTokenContext({ accessToken: 'vat_abc' }, async () =>
+      tool.handler({
+        channel_id: 'ch1',
+        caption: 'pin it',
+        scheduled_at: '2026-05-01T12:00:00Z',
+        attachment_ids: ['att1'],
+        board_id: 'board42',
+        add_to_queue: false,
+        timezone: 'UTC',
+        dry_run: false,
+      }),
+    );
+    const [, options] = mockedRequest.mock.calls[0]!;
+    const body = JSON.parse((options as { body: string }).body);
+    expect(body.boardId).toBe('board42');
+  });
+
+  it('a 429 with retryAfterSeconds reads as a rate limit, not a plan limit', async () => {
+    // The platform rate limiter and plan-quota exhaustion share status 429; only
+    // the latter should tell the user to upgrade.
+    mockResponse(429, { error: 'Too many requests. Please try again later.', retryAfterSeconds: 42 });
+    const tool = findTool('schedule_post');
+    await expect(
+      runWithTokenContext({ accessToken: 'vat_abc' }, async () =>
+        tool.handler({
+          channel_id: 'ch1',
+          caption: 'hello',
+          scheduled_at: '2026-05-01T12:00:00Z',
+          add_to_queue: false,
+          timezone: 'UTC',
+          dry_run: false,
+        }),
+      ),
+    ).rejects.toThrow(/Rate limited.*42 seconds/s);
   });
 
   it('update_post lets an explicit post_type override the current placement', async () => {

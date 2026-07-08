@@ -37,6 +37,12 @@ const inputSchema = z.object({
       'Change the placement: "feed", "reel" (Facebook/Instagram), "story" (Facebook/Instagram), ' +
         '"short" (YouTube). When omitted, the post\'s current placement is preserved.',
     ),
+  board_id: z
+    .string()
+    .optional()
+    .describe(
+      'Pinterest only. Move the pin to a different board. When omitted, the existing board is kept.',
+    ),
   category_id: z.string().optional().describe('Replace the category id.'),
   timezone: z.string().default('UTC'),
   idempotency_key: z.string().optional(),
@@ -118,6 +124,16 @@ registerTool({
     const callerScheduledAt = input.scheduled_at ? toFutureUtcIso(input.scheduled_at) : undefined;
     let scheduledAt = callerScheduledAt ?? current.scheduledAt ?? undefined;
 
+    // A draft parked on a future calendar date must keep that date across a
+    // caption/category edit — omitting scheduledAt makes the API reset it to
+    // "now". Past dates are dropped (the API rejects them even for drafts).
+    const draftScheduledAt = (() => {
+      if (!current.scheduledAt) return undefined;
+      const existing = new Date(current.scheduledAt);
+      if (Number.isNaN(existing.getTime()) || existing.getTime() <= Date.now()) return undefined;
+      return current.scheduledAt;
+    })();
+
     if (scheduleAction === 'Schedule' && callerScheduledAt == null) {
       const existing = current.scheduledAt ? new Date(current.scheduledAt) : undefined;
       if (!existing || Number.isNaN(existing.getTime())) {
@@ -139,9 +155,10 @@ registerTool({
         body: {
           channelId: current.channelId,
           caption: input.caption ?? current.caption,
-          scheduledAt: scheduleAction === 'Schedule' ? scheduledAt : undefined,
+          scheduledAt: scheduleAction === 'Schedule' ? scheduledAt : draftScheduledAt,
           timezone: input.timezone,
           scheduleAction,
+          boardId: input.board_id,
           // The API rebuilds the whole config from the caption on update; echo the
           // post's current placement when the caller doesn't change it, otherwise a
           // caption-only edit would silently demote a story/reel/short to a feed post.

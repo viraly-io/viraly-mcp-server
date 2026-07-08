@@ -18,6 +18,7 @@ describe('tool registry', () => {
         'get_channel_analytics',
         'list_media',
         'list_media_collections',
+        'list_pinterest_boards',
         'list_hashtag_groups',
         'list_categories',
         'get_workspace_info',

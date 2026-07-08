@@ -42,7 +42,7 @@ const REQUIREMENTS: Record<Platform, unknown> = {
     notes: ['Title required', 'No angle brackets (< >) in title/description', 'Max 60 hashtags total'],
   },
   TikTok: {
-    video: { resolution: '360x360 to 4096x4096', max_file_size: '4GB', formats: ['MP4', 'WebM', 'MOV'], caption_max_chars: 2200, note: 'Max duration varies by creator account' },
+    video: { resolution: '360x360 to 4096x4096', max_file_size: '4GB', formats: ['MP4', 'WebM', 'MOV'], caption_max_chars: 2200, note: 'Max duration varies by creator account and is enforced by TikTok at publish time, not at scheduling — keep videos within the creator\'s allowed length or the publish will fail' },
     photo_post: { max_file_size: '10MB', max_count: 35, resolution: '<=1920x1080 or <=1080x1920', formats: ['JPEG', 'WebP'], caption_max_chars: 4000, title_max_chars: 90 },
   },
   Pinterest: {
@@ -51,7 +51,7 @@ const REQUIREMENTS: Record<Platform, unknown> = {
     carousel: { max_count: 5, note: 'Photos only; all must share the same aspect ratio' },
     title_max_chars: 100,
     description_max_chars: 800,
-    notes: ['A board must be selected'],
+    notes: ['A board must be selected — pass board_id (discover ids with list_pinterest_boards)'],
   },
   LinkedIn: {
     photo_post: { max_file_size: '8MB', max_pixels: 'width x height <= 36,152,320', formats: ['JPEG', 'PNG'] },
