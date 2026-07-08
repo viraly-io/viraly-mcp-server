@@ -103,7 +103,11 @@ function formatToolError(err: unknown): string {
     return `You've reached a Viraly plan limit${detail}. Upgrade at https://viraly.io/pricing to continue.`;
   }
   if (err instanceof ViralyTransientError) {
-    return `Viraly is temporarily unavailable (${err.status}). Please try again in a moment.`;
+    // Rate-limit 429s carry a specific "wait N seconds" hint — surface it
+    // instead of the generic unavailable line.
+    return err.status === 429 && err.message
+      ? err.message
+      : `Viraly is temporarily unavailable (${err.status}). Please try again in a moment.`;
   }
   if (err instanceof ViralyApiError) {
     return `Viraly API error: ${err.message}`;
