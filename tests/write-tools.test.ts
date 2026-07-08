@@ -328,6 +328,107 @@ describe('schedule_post', () => {
   });
 });
 
+describe('post_type placement', () => {
+  it('schedule_post forwards post_type as the API postType enum string', async () => {
+    mockResponse(200, { id: 'p1', channelId: 'ch1', status: 'Scheduled' });
+    const tool = findTool('schedule_post');
+    await runWithTokenContext({ accessToken: 'vat_abc' }, async () =>
+      tool.handler({
+        channel_id: 'ch1',
+        caption: 'story time',
+        scheduled_at: '2026-05-01T12:00:00Z',
+        attachment_ids: ['att1'],
+        post_type: 'story',
+        add_to_queue: false,
+        timezone: 'UTC',
+        dry_run: false,
+      }),
+    );
+    const [, options] = mockedRequest.mock.calls[0]!;
+    const body = JSON.parse((options as { body: string }).body);
+    expect(body.postType).toBe('Story');
+  });
+
+  it('schedule_post defaults to Feed when post_type is omitted', async () => {
+    mockResponse(200, { id: 'p1', channelId: 'ch1', status: 'Scheduled' });
+    const tool = findTool('schedule_post');
+    await runWithTokenContext({ accessToken: 'vat_abc' }, async () =>
+      tool.handler({
+        channel_id: 'ch1',
+        caption: 'plain post',
+        scheduled_at: '2026-05-01T12:00:00Z',
+        add_to_queue: false,
+        timezone: 'UTC',
+        dry_run: false,
+      }),
+    );
+    const [, options] = mockedRequest.mock.calls[0]!;
+    const body = JSON.parse((options as { body: string }).body);
+    expect(body.postType).toBe('Feed');
+  });
+
+  it('create_draft forwards post_type', async () => {
+    mockResponse(200, { id: 'p1', channelId: 'ch1', status: 'Draft' });
+    const tool = findTool('create_draft');
+    await runWithTokenContext({ accessToken: 'vat_abc' }, async () =>
+      tool.handler({
+        channel_id: 'ch1',
+        caption: 'reel draft',
+        attachment_ids: ['att1'],
+        post_type: 'reel',
+        timezone: 'UTC',
+      }),
+    );
+    const [, options] = mockedRequest.mock.calls[0]!;
+    const body = JSON.parse((options as { body: string }).body);
+    expect(body.postType).toBe('Reel');
+  });
+
+  it('update_post preserves the current story placement on a caption-only edit', async () => {
+    // The API rebuilds the config from the caption on update; if the tool
+    // didn't echo the placement, this edit would demote the story to a feed post.
+    mockResponse(200, {
+      id: 'p1',
+      channelId: 'ch1',
+      status: 'Draft',
+      caption: 'old',
+      config: {
+        channelType: 'Instagram',
+        instagram: { contentOptions: { postType: 'Story', systemPostType: 'PhotoStory' } },
+      },
+    });
+    mockResponse(200, { id: 'p1', channelId: 'ch1', status: 'Draft' });
+    const tool = findTool('update_post');
+    await runWithTokenContext({ accessToken: 'vat_abc' }, async () =>
+      tool.handler({ post_id: 'p1', caption: 'new caption', timezone: 'UTC' }),
+    );
+    const [, putOptions] = mockedRequest.mock.calls[1]!;
+    const body = JSON.parse((putOptions as { body: string }).body);
+    expect(body.postType).toBe('Story');
+  });
+
+  it('update_post lets an explicit post_type override the current placement', async () => {
+    mockResponse(200, {
+      id: 'p1',
+      channelId: 'ch1',
+      status: 'Draft',
+      caption: 'old',
+      config: {
+        channelType: 'Facebook',
+        facebook: { contentOptions: { postType: 'Post', systemPostType: 'VideoPost' } },
+      },
+    });
+    mockResponse(200, { id: 'p1', channelId: 'ch1', status: 'Draft' });
+    const tool = findTool('update_post');
+    await runWithTokenContext({ accessToken: 'vat_abc' }, async () =>
+      tool.handler({ post_id: 'p1', post_type: 'reel', timezone: 'UTC' }),
+    );
+    const [, putOptions] = mockedRequest.mock.calls[1]!;
+    const body = JSON.parse((putOptions as { body: string }).body);
+    expect(body.postType).toBe('Reel');
+  });
+});
+
 describe('update_post alt text', () => {
   it('preserves existing attachment alt text on a caption-only edit', async () => {
     // Regression: replacing attachments used to drop altText; a caption-only

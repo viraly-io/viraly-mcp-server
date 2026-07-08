@@ -6,6 +6,7 @@ import { registerTool } from '../registry.js';
 import { attachmentIdsInput, attachmentsInput, buildPostAttachments } from './_attachments.js';
 import { toFutureUtcIso, toUtcIso } from './_datetime.js';
 import { dedupeWrite, deriveIdempotencyKey } from './_idempotency.js';
+import { toApiPostType } from './_post-type.js';
 
 const inputSchema = z.object({
   channel_id: z
@@ -30,6 +31,16 @@ const inputSchema = z.object({
     .describe('When true, ignore scheduled_at and add the post to the channel\'s default queue.'),
   attachment_ids: attachmentIdsInput,
   attachments: attachmentsInput,
+  post_type: z
+    .enum(['feed', 'reel', 'story', 'short'])
+    .default('feed')
+    .describe(
+      'Placement of the post: "feed" (default), "reel" (Facebook/Instagram; exactly one video), ' +
+        '"story" (Facebook/Instagram; exactly one photo or video), "short" (YouTube; one vertical ' +
+        'video up to 3 minutes). Other platforms support "feed" only; unsupported combinations are ' +
+        'rejected with a clear error. Feed posts auto-derive their concrete type from the media ' +
+        '(multiple photos become a carousel; a video on an Instagram feed publishes as a reel).',
+    ),
   category_id: z.string().optional().describe('Optional. Category / content queue id.'),
   timezone: z
     .string()
@@ -54,7 +65,7 @@ const SUPPORTED_TIMEZONES = new Set<string>([...Intl.supportedValuesOf('timeZone
 registerTool({
   name: 'schedule_post',
   description:
-    'Schedule a new social post to a single channel. Provide either scheduled_at (specific time) or add_to_queue=true (next slot in the channel\'s default queue). For multi-channel publishing, call this tool once per channel. To set accessibility alt text on media, pass `attachments` (with per-item alt_text) instead of attachment_ids.',
+    'Schedule a new social post to a single channel. Provide either scheduled_at (specific time) or add_to_queue=true (next slot in the channel\'s default queue). For multi-channel publishing, call this tool once per channel. Use post_type to publish reels or stories (Facebook/Instagram) or YouTube Shorts; check get_media_requirements for the media rules first. To set accessibility alt text on media, pass `attachments` (with per-item alt_text) instead of attachment_ids.',
   inputSchema,
   isWrite: true,
   handler: async (input) => {
@@ -85,6 +96,7 @@ registerTool({
           caption: input.caption,
           scheduled_at: scheduledAtUtc,
           add_to_queue: input.add_to_queue,
+          post_type: input.post_type ?? 'feed',
           attachment_count: buildPostAttachments(input)?.length ?? 0,
           category_id: input.category_id,
           timezone: input.timezone,
@@ -107,6 +119,7 @@ registerTool({
           scheduledAt: scheduledAtUtc,
           timezone: input.timezone,
           scheduleAction: input.add_to_queue ? 'AddToQueue' : 'Schedule',
+          postType: toApiPostType(input.post_type),
           // The API only reads the plural categoryIds; the singular categoryId
           // binds to a dead view-model property and is silently ignored.
           categoryIds: input.category_id ? [input.category_id] : undefined,

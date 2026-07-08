@@ -6,6 +6,7 @@ import { registerTool } from '../registry.js';
 import { attachmentIdsInput, attachmentsInput, buildPostAttachments } from './_attachments.js';
 import { toFutureUtcIso } from './_datetime.js';
 import { dedupeWrite, deriveIdempotencyKey } from './_idempotency.js';
+import { derivePostTypeFromConfig, toApiPostType } from './_post-type.js';
 
 const SUPPORTED_TIMEZONES = new Set<string>([...Intl.supportedValuesOf('timeZone'), 'UTC']);
 
@@ -29,6 +30,13 @@ const inputSchema = z.object({
     .describe('New scheduled time as ISO 8601 with offset.'),
   attachment_ids: attachmentIdsInput,
   attachments: attachmentsInput,
+  post_type: z
+    .enum(['feed', 'reel', 'story', 'short'])
+    .optional()
+    .describe(
+      'Change the placement: "feed", "reel" (Facebook/Instagram), "story" (Facebook/Instagram), ' +
+        '"short" (YouTube). When omitted, the post\'s current placement is preserved.',
+    ),
   category_id: z.string().optional().describe('Replace the category id.'),
   timezone: z.string().default('UTC'),
   idempotency_key: z.string().optional(),
@@ -37,7 +45,7 @@ const inputSchema = z.object({
 registerTool({
   name: 'update_post',
   description:
-    'Update an existing scheduled post — change the caption, schedule time, attachments, or category. Provide only the fields you want to change. Cannot update a post that has already been published. To set or change accessibility alt text on media, pass `attachments` (with per-item alt_text) instead of attachment_ids; existing alt text is preserved when you leave attachments unchanged.',
+    'Update an existing scheduled post — change the caption, schedule time, attachments, placement (post_type), or category. Provide only the fields you want to change. Cannot update a post that has already been published. To set or change accessibility alt text on media, pass `attachments` (with per-item alt_text) instead of attachment_ids; existing alt text is preserved when you leave attachments unchanged.',
   inputSchema,
   isWrite: true,
   handler: async (input) => {
@@ -134,6 +142,10 @@ registerTool({
           scheduledAt: scheduleAction === 'Schedule' ? scheduledAt : undefined,
           timezone: input.timezone,
           scheduleAction,
+          // The API rebuilds the whole config from the caption on update; echo the
+          // post's current placement when the caller doesn't change it, otherwise a
+          // caption-only edit would silently demote a story/reel/short to a feed post.
+          postType: toApiPostType(input.post_type ?? derivePostTypeFromConfig(current.config)),
           // The API only consumes the plural categoryIds (PostService reads
           // model.CategoryIds; the singular CategoryId on the view model is
           // dead). UpdatePost also wipes ALL existing category links and

@@ -55,8 +55,21 @@ export interface PostErrorUpstream {
   code?: string;
 }
 
+export interface PlatformContentOptionsUpstream {
+  /** Per-platform placement enum as a string, e.g. "Post" | "Reel" | "Story"
+   *  (Facebook/Instagram) or "ShortVideo" | "Video" (YouTube). */
+  postType?: string;
+}
+
+export interface PlatformConfigBlobUpstream {
+  contentOptions?: PlatformContentOptionsUpstream | null;
+}
+
 export interface PostConfigUpstream {
   channelType?: string;
+  facebook?: PlatformConfigBlobUpstream | null;
+  instagram?: PlatformConfigBlobUpstream | null;
+  youTube?: PlatformConfigBlobUpstream | null;
 }
 
 export interface PostDtoUpstream {

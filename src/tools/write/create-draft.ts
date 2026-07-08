@@ -6,6 +6,7 @@ import { registerTool } from '../registry.js';
 import { attachmentIdsInput, attachmentsInput, buildPostAttachments } from './_attachments.js';
 import { toUtcIso } from './_datetime.js';
 import { dedupeWrite, deriveIdempotencyKey } from './_idempotency.js';
+import { toApiPostType } from './_post-type.js';
 
 const inputSchema = z.object({
   channel_id: z.string().min(1).describe('The channel id the draft is for.'),
@@ -20,6 +21,13 @@ const inputSchema = z.object({
     ),
   attachment_ids: attachmentIdsInput,
   attachments: attachmentsInput,
+  post_type: z
+    .enum(['feed', 'reel', 'story', 'short'])
+    .default('feed')
+    .describe(
+      'Placement of the post: "feed" (default), "reel" (Facebook/Instagram), "story" ' +
+        '(Facebook/Instagram), "short" (YouTube). Other platforms support "feed" only.',
+    ),
   category_id: z.string().optional(),
   timezone: z.string().default('UTC'),
   idempotency_key: z.string().optional(),
@@ -55,6 +63,7 @@ registerTool({
           scheduledAt: toUtcIso(input.scheduled_at),
           timezone: input.timezone,
           scheduleAction: 'SaveDraft',
+          postType: toApiPostType(input.post_type),
           // The API only reads the plural categoryIds; the singular categoryId
           // binds to a dead view-model property and is silently ignored.
           categoryIds: input.category_id ? [input.category_id] : undefined,
