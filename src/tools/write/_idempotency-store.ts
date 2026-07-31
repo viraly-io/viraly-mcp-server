@@ -14,20 +14,15 @@
  * post.
  *
  * So the store is pluggable:
- *   - `MCP_IDEMPOTENCY_TABLE` set  -> DynamoDB, shared across invocations.
- *   - unset                        -> in-process Map (stdio, local dev,
- *                                     self-hosted single-container deploys).
+ *   - `MCP_REDIS_CONNECTION` set -> Redis/Valkey, shared across invocations.
+ *   - unset                      -> in-process Map (stdio, local dev,
+ *                                   self-hosted single-container deploys).
  *
- * Self-hosters and stdio users therefore keep working with no AWS dependency,
- * and get exactly the guarantee a single process can offer.
- *
- * TTL NOTE: DynamoDB's own TTL deletion is lazy (AWS documents up to 48h), so
- * it is used only to keep the table small. Expiry that matters for CORRECTNESS
- * is enforced by comparing the `expiresAt` attribute inside every condition
- * expression, never by trusting the row to be gone.
+ * Self-hosters and stdio users therefore keep working with no infrastructure
+ * dependency, and get exactly the guarantee a single process can offer.
  */
 
-/** How long a completed write result is remembered. Matches the previous in-process TTL. */
+/** How long a completed write result is remembered. */
 export const DONE_TTL_MS = 60_000;
 
 /**
@@ -40,8 +35,8 @@ export const DONE_TTL_MS = 60_000;
  *
  * The ordering the deployment must preserve:
  *   upstream HTTP timeout (30s)
- *     < Lambda timeout (40s)        so the app returns its own error
- *     < CLAIM_TTL (45s)             so a killed invocation's claim outlives it
+ *     < Lambda timeout (40s)         so the app returns its own error
+ *     < CLAIM_TTL (45s)              so a killed invocation's claim outlives it
  *     < CloudFront readTimeout (60s) so the edge surfaces the app's error
  */
 export const CLAIM_TTL_MS = 45_000;
@@ -66,6 +61,12 @@ export interface DedupeStore {
   abandon(key: string): Promise<void>;
   /** Poll for a completed result while another caller holds the claim. */
   poll(key: string): Promise<ClaimOutcome>;
+}
+
+/** Serialized shape stored under each key. */
+interface StoredEntry {
+  state: 'running' | 'done';
+  result?: unknown;
 }
 
 // ── In-process store ────────────────────────────────────────────────────────
@@ -117,122 +118,155 @@ export class MemoryDedupeStore implements DedupeStore {
   }
 }
 
-// ── DynamoDB store ──────────────────────────────────────────────────────────
+// ── Redis / Valkey store ────────────────────────────────────────────────────
+
+/** Namespace so these keys never collide with the inbox rate limiter's. */
+const KEY_PREFIX = 'mcp:dedupe:';
 
 /**
- * Cross-invocation store for Lambda. One row per (token-scoped) idempotency
- * key, claimed with a conditional put so exactly one caller can win a race.
+ * Cross-invocation store backed by the shared Valkey cluster.
  *
- * The SDK is imported dynamically so that neither stdio mode nor a self-hosted
- * container pays its init cost when `MCP_IDEMPOTENCY_TABLE` is unset.
+ * Redis suits this better than a database would: `SET key value PX ttl NX` is a
+ * single atomic claim, and expiry is enforced by the server rather than by
+ * comparing timestamps on read, so there is no window in which a logically
+ * expired entry is still visible.
+ *
+ * The client is created lazily and memoized on the instance, and the instance
+ * itself lives at module scope, so the connection survives between invocations
+ * in a warm execution environment.
+ *
+ * FAILURE POLICY: errors from `claim` propagate. If the cluster is unreachable
+ * we cannot promise a retry will be deduped, and proceeding anyway would
+ * produce exactly the duplicate post this store exists to prevent. Failing
+ * before the upstream call is issued leaves no partial state. `complete` is
+ * best effort by contrast, because by then the write has already succeeded and
+ * losing the cache entry only weakens dedupe for the next 60s.
  */
-export class DynamoDedupeStore implements DedupeStore {
-  private readonly tableName: string;
-  private clientPromise: Promise<DynamoLike> | undefined;
+export class RedisDedupeStore implements DedupeStore {
+  private readonly connectionString: string;
+  private clientPromise: Promise<RedisLike> | undefined;
 
-  constructor(tableName: string) {
-    this.tableName = tableName;
+  constructor(connectionString: string) {
+    this.connectionString = connectionString;
   }
 
-  private async client(): Promise<DynamoLike> {
+  private async client(): Promise<RedisLike> {
     this.clientPromise ??= (async () => {
-      const { DynamoDBClient } = await import('@aws-sdk/client-dynamodb');
-      return new DynamoDBClient({}) as unknown as DynamoLike;
+      const { Redis } = await import('ioredis');
+      const { host, port, tls } = parseConnectionString(this.connectionString);
+      return new Redis({
+        host,
+        port,
+        ...(tls ? { tls: {} } : {}),
+        // Fail fast rather than hanging an invocation that is already on a
+        // deadline. A stuck connect here would burn the whole Lambda timeout.
+        connectTimeout: 3_000,
+        commandTimeout: 3_000,
+        maxRetriesPerRequest: 2,
+        // Do not connect during module init; the first command opens it. Read
+        // only tool calls never touch this store, so they never pay for it.
+        lazyConnect: true,
+        keepAlive: 30_000,
+      }) as unknown as RedisLike;
     })();
     return this.clientPromise;
   }
 
   async claim(key: string): Promise<ClaimOutcome> {
-    const { PutItemCommand } = await import('@aws-sdk/client-dynamodb');
     const client = await this.client();
-    const nowMs = Date.now();
+    const entry: StoredEntry = { state: 'running' };
 
-    try {
-      await client.send(
-        new PutItemCommand({
-          TableName: this.tableName,
-          Item: {
-            pk: { S: key },
-            state: { S: 'running' },
-            expiresAtMs: { N: String(nowMs + CLAIM_TTL_MS) },
-            // Seconds, and padded well past the logical TTL. This attribute only
-            // drives DynamoDB's lazy row cleanup, never correctness.
-            ttl: { N: String(Math.floor((nowMs + CLAIM_TTL_MS) / 1000) + 3600) },
-          },
-          // Win only if there is no live row: either nothing exists, or what
-          // exists has logically expired.
-          ConditionExpression: 'attribute_not_exists(pk) OR expiresAtMs < :nowMs',
-          ExpressionAttributeValues: { ':nowMs': { N: String(nowMs) } },
-        }),
-      );
-      return { kind: 'claimed' };
-    } catch (err) {
-      if (!isConditionalCheckFailed(err)) throw err;
-      // Lost the race, or a live result already exists. Find out which.
-      return this.poll(key);
-    }
+    // NX is the atomic claim: exactly one concurrent caller receives 'OK'.
+    const won = await client.set(
+      KEY_PREFIX + key,
+      JSON.stringify(entry),
+      'PX',
+      CLAIM_TTL_MS,
+      'NX',
+    );
+    if (won === 'OK') return { kind: 'claimed' };
+
+    // Lost the race, or a live result already exists. Find out which.
+    return this.poll(key);
   }
 
   async complete(key: string, result: unknown): Promise<void> {
-    const { PutItemCommand } = await import('@aws-sdk/client-dynamodb');
     const client = await this.client();
-    const nowMs = Date.now();
-    await client.send(
-      new PutItemCommand({
-        TableName: this.tableName,
-        Item: {
-          pk: { S: key },
-          state: { S: 'done' },
-          result: { S: JSON.stringify(result ?? null) },
-          expiresAtMs: { N: String(nowMs + DONE_TTL_MS) },
-          ttl: { N: String(Math.floor((nowMs + DONE_TTL_MS) / 1000) + 3600) },
-        },
-      }),
-    );
+    const entry: StoredEntry = { state: 'done', result: result ?? null };
+    await client.set(KEY_PREFIX + key, JSON.stringify(entry), 'PX', DONE_TTL_MS);
   }
 
   async abandon(key: string): Promise<void> {
-    const { DeleteItemCommand } = await import('@aws-sdk/client-dynamodb');
     const client = await this.client();
-    await client.send(
-      new DeleteItemCommand({ TableName: this.tableName, Key: { pk: { S: key } } }),
-    );
+    await client.del(KEY_PREFIX + key);
   }
 
   async poll(key: string): Promise<ClaimOutcome> {
-    const { GetItemCommand } = await import('@aws-sdk/client-dynamodb');
     const client = await this.client();
-    const res = await client.send(
-      new GetItemCommand({
-        TableName: this.tableName,
-        Key: { pk: { S: key } },
-        ConsistentRead: true,
-      }),
-    );
+    const raw = await client.get(KEY_PREFIX + key);
+    // Absent means expired or abandoned, so the operation is free again.
+    if (raw === null || raw === undefined) return { kind: 'claimed' };
 
-    const item = res.Item;
-    if (!item) return { kind: 'claimed' };
-
-    const expiresAtMs = Number(item.expiresAtMs?.N ?? '0');
-    if (expiresAtMs <= Date.now()) return { kind: 'claimed' };
-
-    if (item.state?.S === 'done') {
-      const raw = item.result?.S;
-      return { kind: 'completed', result: raw === undefined ? null : (JSON.parse(raw) as unknown) };
+    let entry: StoredEntry;
+    try {
+      entry = JSON.parse(raw) as StoredEntry;
+    } catch {
+      // Unparseable value: treat as free rather than deadlocking on it.
+      return { kind: 'claimed' };
     }
+    if (entry.state === 'done') return { kind: 'completed', result: entry.result };
     return { kind: 'in-flight' };
   }
 }
 
-/** Minimal structural type so we do not need the SDK's types at build time. */
-interface DynamoLike {
-  send(command: unknown): Promise<{ Item?: Record<string, { S?: string; N?: string }> }>;
+/** Minimal structural type so the client's types are not needed at build time. */
+interface RedisLike {
+  set(key: string, value: string, px: 'PX', ttl: number, nx?: 'NX'): Promise<string | null>;
+  get(key: string): Promise<string | null>;
+  del(key: string): Promise<number>;
 }
 
-function isConditionalCheckFailed(err: unknown): boolean {
-  if (typeof err !== 'object' || err === null) return false;
-  const name = (err as { name?: string }).name;
-  return name === 'ConditionalCheckFailedException';
+/**
+ * Parse the StackExchange.Redis style connection string the platform publishes,
+ * for example:
+ *
+ *   viraly-valkey-beta.xxx.cache.amazonaws.com:6379,abortConnect=false
+ *   viraly-valkey.xxx.cache.amazonaws.com:6379,abortConnect=false,ssl=true
+ *
+ * This is the same `ValkeyConnectionString` CloudFormation export the .NET
+ * Lambdas consume, so both fleets read one source of truth. It is NOT a
+ * `redis://` URL and cannot be handed to a Node client directly.
+ *
+ * The `ssl` flag genuinely differs by environment: production Valkey has
+ * transit encryption required, beta has it off.
+ */
+export function parseConnectionString(raw: string): {
+  host: string;
+  port: number;
+  tls: boolean;
+} {
+  const parts = raw
+    .split(',')
+    .map((p) => p.trim())
+    .filter((p) => p.length > 0);
+  const endpoint = parts[0] ?? '';
+  const options = parts.slice(1);
+
+  const lastColon = endpoint.lastIndexOf(':');
+  const host = lastColon === -1 ? endpoint : endpoint.slice(0, lastColon);
+  const port = lastColon === -1 ? 6379 : Number(endpoint.slice(lastColon + 1));
+
+  if (!host) throw new Error(`Redis connection string has no host: "${raw}"`);
+  if (!Number.isInteger(port) || port <= 0) {
+    throw new Error(`Redis connection string has an invalid port: "${raw}"`);
+  }
+
+  const tls = options.some((o) => {
+    const [k, v] = o.split('=').map((s) => s.trim().toLowerCase());
+    return k === 'ssl' && v === 'true';
+  });
+
+  return { host, port, tls };
 }
 
 // ── Selection ───────────────────────────────────────────────────────────────
@@ -244,8 +278,8 @@ let store: DedupeStore | undefined;
  */
 export function getDedupeStore(): DedupeStore {
   if (!store) {
-    const table = process.env.MCP_IDEMPOTENCY_TABLE;
-    store = table ? new DynamoDedupeStore(table) : new MemoryDedupeStore();
+    const connection = process.env.MCP_REDIS_CONNECTION;
+    store = connection ? new RedisDedupeStore(connection) : new MemoryDedupeStore();
   }
   return store;
 }

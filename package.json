@@ -2,7 +2,7 @@
   "name": "@viraly/mcp",
   "version": "0.1.0",
   "private": true,
-  "description": "Viraly Model Context Protocol server \u2014 connect Viraly to Claude, ChatGPT, Cursor, and other LLM clients.",
+  "description": "Viraly Model Context Protocol server — connect Viraly to Claude, ChatGPT, Cursor, and other LLM clients.",
   "license": "MIT",
   "homepage": "https://viraly.io/mcp",
   "repository": {
@@ -34,10 +34,10 @@
     "build:lambda": "esbuild src/lambda.ts --bundle --platform=node --format=esm --target=node22 --outfile=dist-lambda/index.mjs --banner:js=\"import{createRequire as __cr}from'module';const require=__cr(import.meta.url);\""
   },
   "dependencies": {
-    "@aws-sdk/client-dynamodb": "^3.1100.0",
     "@modelcontextprotocol/sdk": "^1.0.4",
     "cors": "^2.8.5",
     "express": "^4.21.2",
+    "ioredis": "^5.11.1",
     "pino": "^9.5.0",
     "pino-http": "^10.3.0",
     "prom-client": "^15.1.3",
