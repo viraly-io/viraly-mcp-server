@@ -62,11 +62,17 @@ async function callMetrics(
 }
 
 describe('/metrics auth', () => {
-  it('open by default when MCP_METRICS_TOKEN is unset', async () => {
+  it('is not served at all when MCP_METRICS_TOKEN is unset', async () => {
+    // Fails closed. The route used to register unconditionally and serve
+    // openly without a token, on the theory that a WAF or security group would
+    // gate it. No deployment ever did: App Runner has no private networking,
+    // and behind CloudFront it is reachable at https://<public-domain>/metrics.
+    // An unset token now means no route, so process metrics, tool-call rates
+    // and auth-failure counts cannot leak by omission.
     const app = createHttpApp({ ...baseConfig, metricsAuthToken: undefined }, silentLogger);
     const r = await callMetrics(app);
-    expect(r.status).toBe(200);
-    expect(r.body).toContain('mcp_tool_calls_total');
+    expect(r.status).toBe(404);
+    expect(r.body).not.toContain('mcp_tool_calls_total');
   });
 
   it('requires Bearer token when MCP_METRICS_TOKEN is set', async () => {
