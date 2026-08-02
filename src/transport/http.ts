@@ -58,35 +58,23 @@ export function createHttpApp(config: ServerConfig, logger: Logger): Express {
         return;
       }
 
-      // This runs BEFORE pino-http, so a rejected request is cheap. The cost
-      // of that ordering is that it would otherwise leave no trace whatsoever:
-      // someone probing the origin hostname directly would surface only as
-      // invocation count with no matching log lines, which is a blind spot in
-      // exactly the control this middleware implements. So emit one
-      // deliberate line, shaped by us rather than inheriting the whole
-      // request log.
+      // Deliberately NOT logged, and deliberately before pino-http.
       //
-      // The presented value is NEVER logged. Whether one was sent at all is
-      // the useful signal (a wrong guess versus nothing), and logging guesses
-      // would put attacker-controlled strings into the log.
-      logger.warn(
-        {
-          event: 'edge_token_rejected',
-          method: req.method,
-          url: req.originalUrl,
-          tokenPresented: presented.length > 0,
-          userAgent: req.header('user-agent'),
-          // Set by CloudFront, so its ABSENCE is the interesting part: it
-          // means the request did not arrive through the CDN.
-          viewerAddress: req.header('cloudfront-viewer-address'),
-          // Client-supplied and therefore forgeable. A hint, not evidence.
-          forwardedFor: req.header('x-forwarded-for'),
-        },
-        'Rejected request without a valid edge token',
-      );
-
-      // Deliberately indistinguishable from the catch-all: a prober learns
-      // nothing about whether the path exists or why it was refused.
+      // There is nothing actionable in knowing someone reached the origin
+      // hostname: the request is refused either way, and the protection does
+      // not depend on noticing it. Logging it was measurably the most
+      // expensive part of a rejection, 274 bytes of line plus ~250 bytes of
+      // platform records, which came to roughly 57% of the total cost per
+      // rejected request against 4% for the compute. Paying the majority of a
+      // request's cost for a signal nobody acts on is the wrong trade, and it
+      // scales with exactly the flood it would be reporting on.
+      //
+      // Rejections remain visible in aggregate: invocation count without
+      // matching application log lines is the signature, and CloudFront
+      // request counts show the legitimate half separately.
+      //
+      // The response is indistinguishable from the catch-all, so a prober
+      // learns nothing about whether the path exists or why it was refused.
       res.status(404).json({ error: 'not_found' });
     });
   }
