@@ -25,6 +25,12 @@ export function createLogger(config: ServerConfig): Logger {
         'req.headers["x-csrf-token"]',
         'req.headers["x-session-token"]',
         'req.headers["proxy-authorization"]',
+        // The CDN origin-lock secret. Present on EVERY request that arrives
+        // through CloudFront, so without this it would be written to the log
+        // in plaintext on every single invocation, handing the value to anyone
+        // with log read access. Log read is routinely granted more widely than
+        // IAM config read, and logs get shipped onward and retained for months.
+        'req.headers["x-viraly-edge-token"]',
         // Any field literally named one of these in a body or response —
         // covers OAuth tokens nested anywhere in the JSON we log.
         '*.access_token',

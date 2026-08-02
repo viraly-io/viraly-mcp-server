@@ -37,6 +37,15 @@ export interface ServerConfig {
   /** Optional bearer token required to scrape /metrics. When unset, the
    * endpoint is open — relies on network-layer (WAF / SG) restriction. */
   metricsAuthToken: string | undefined;
+
+  /**
+   * Shared secret proving a request arrived through our CDN rather than
+   * directly at the origin. When set, every request must carry it in
+   * `x-viraly-edge-token` or it is refused. Unset disables the check, which is
+   * correct for stdio, local dev and self-hosted deployments that have no CDN
+   * in front.
+   */
+  edgeToken: string | undefined;
 }
 
 const DEFAULT_PORT = 8080;
@@ -91,5 +100,6 @@ export function loadConfig(): ServerConfig {
     logLevel: logLevelRaw as ServerConfig['logLevel'],
     rateLimitPerMinute: optionalInt('MCP_RATE_LIMIT_PER_MINUTE', DEFAULT_RATE_LIMIT),
     metricsAuthToken: process.env.MCP_METRICS_TOKEN || undefined,
+    edgeToken: process.env.MCP_EDGE_TOKEN || undefined,
   };
 }

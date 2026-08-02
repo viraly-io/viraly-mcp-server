@@ -242,12 +242,22 @@ section('9. OPTIONS preflight');
   check('preflight does not 5xx', res.status < 500, `got ${res.status}`);
 }
 
-// 10. Unknown route
-section('10. Unknown route returns a clean 404');
+// 10. Unsupported paths are refused at the edge
+section('10. Unsupported paths 404 at the edge, never reaching Lambda');
 {
-  const { res, json } = await req('/definitely-not-a-route');
-  check('status 404', res.status === 404, `got ${res.status}`);
-  check('json error body', json?.error === 'not_found', JSON.stringify(json));
+  // CloudFront routes only /mcp, /health and the RFC 9728 document to the
+  // Lambda. Everything else lands on the catch-all origin (an empty private
+  // bucket) and 404s without an invocation. This exists because the endpoint
+  // is public and continuously scanned: a burst of .env probes once consumed
+  // beta's entire regional Lambda concurrency pool.
+  for (const path of ['/definitely-not-a-route', '/.env', '/.env.production', '/wp-admin/', '/.git/config']) {
+    const { res } = await req(path);
+    check(`404 for ${path}`, res.status === 404, `got ${res.status}`);
+  }
+  // A POST to a junk path is refused by CloudFront itself: the catch-all
+  // behavior permits GET/HEAD only.
+  const { res: postRes } = await req('/.env', { method: 'POST', body: '{}' });
+  check('POST to a junk path is refused', postRes.status === 403 || postRes.status === 405, `got ${postRes.status}`);
 }
 
 console.log(`\n${'='.repeat(60)}`);

@@ -32,6 +32,65 @@ export function createHttpApp(config: ServerConfig, logger: Logger): Express {
 
   app.use(normalizeRawHeaders);
 
+  // ── Origin lock ────────────────────────────────────────────────────
+  //
+  // A Lambda Function URL is publicly reachable at its own
+  // `*.lambda-url.*.on.aws` hostname, which bypasses the CDN entirely. That
+  // matters because every edge-layer control lives there: the path allowlist
+  // that keeps scanner traffic away from this function, and anything added
+  // later. Authentication is unaffected either way (it is bearer validation
+  // in this process and upstream), so this is not an auth boundary. It exists
+  // so the edge controls cannot simply be stepped around by anyone who learns
+  // the origin hostname.
+  //
+  // The CDN injects this header on every origin request. Note it is
+  // deliberately NOT `Authorization`: that header belongs to the caller's MCP
+  // token, which is exactly why Origin Access Control is unusable here.
+  //
+  // Unset means no check, which is correct for stdio, local dev, and
+  // self-hosted deployments with no CDN in front.
+  if (config.edgeToken) {
+    const expectedEdgeToken = config.edgeToken;
+    app.use((req, res, next) => {
+      const presented = req.header(EDGE_TOKEN_HEADER) ?? '';
+      if (timingSafeStringEquals(presented, expectedEdgeToken)) {
+        next();
+        return;
+      }
+
+      // This runs BEFORE pino-http, so a rejected request is cheap. The cost
+      // of that ordering is that it would otherwise leave no trace whatsoever:
+      // someone probing the origin hostname directly would surface only as
+      // invocation count with no matching log lines, which is a blind spot in
+      // exactly the control this middleware implements. So emit one
+      // deliberate line, shaped by us rather than inheriting the whole
+      // request log.
+      //
+      // The presented value is NEVER logged. Whether one was sent at all is
+      // the useful signal (a wrong guess versus nothing), and logging guesses
+      // would put attacker-controlled strings into the log.
+      logger.warn(
+        {
+          event: 'edge_token_rejected',
+          method: req.method,
+          url: req.originalUrl,
+          tokenPresented: presented.length > 0,
+          userAgent: req.header('user-agent'),
+          // Set by CloudFront, so its ABSENCE is the interesting part: it
+          // means the request did not arrive through the CDN.
+          viewerAddress: req.header('cloudfront-viewer-address'),
+          // Client-supplied and therefore forgeable. A hint, not evidence.
+          forwardedFor: req.header('x-forwarded-for'),
+        },
+        'Rejected request without a valid edge token',
+      );
+
+      // Deliberately indistinguishable from the catch-all: a prober learns
+      // nothing about whether the path exists or why it was refused.
+      res.status(404).json({ error: 'not_found' });
+    });
+  }
+
   app.use(
     pinoHttp({
       logger,
@@ -168,6 +227,12 @@ export function createHttpApp(config: ServerConfig, logger: Logger): Express {
 
   return app;
 }
+
+/**
+ * Header the CDN injects to prove a request came through it. Kept out of
+ * `Authorization` on purpose: that header carries the caller's MCP token.
+ */
+const EDGE_TOKEN_HEADER = 'x-viraly-edge-token';
 
 /**
  * Rebuild `req.rawHeaders` from `req.headers` when a driver did not supply it.
