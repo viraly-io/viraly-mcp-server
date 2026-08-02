@@ -39,7 +39,6 @@ beforeEach(() => {
     oauthIssuer: 'https://api.test.viraly.io',
     corsAllowedOrigins: [],
     logLevel: 'warn',
-    rateLimitPerMinute: 300,
   });
   mockedRequest.mockReset();
 });

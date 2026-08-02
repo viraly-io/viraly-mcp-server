@@ -44,7 +44,6 @@ beforeEach(() => {
     oauthIssuer: 'https://api.test.viraly.io',
     corsAllowedOrigins: [],
     logLevel: 'warn',
-    rateLimitPerMinute: 300,
   });
   mockedRequest.mockReset();
   // Writes are now wrapped in the in-process dedupe cache; clear it between

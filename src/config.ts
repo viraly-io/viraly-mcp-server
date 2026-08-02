@@ -31,9 +31,6 @@ export interface ServerConfig {
   /** "info" by default; "debug" in development, "warn" in load tests. */
   logLevel: 'trace' | 'debug' | 'info' | 'warn' | 'error' | 'fatal';
 
-  /** Per-token rate limit in requests per minute. */
-  rateLimitPerMinute: number;
-
   /** Optional bearer token required to scrape /metrics. When unset, the
    * endpoint is open — relies on network-layer (WAF / SG) restriction. */
   metricsAuthToken: string | undefined;
@@ -49,7 +46,6 @@ export interface ServerConfig {
 }
 
 const DEFAULT_PORT = 8080;
-const DEFAULT_RATE_LIMIT = 300;
 
 function requireEnv(name: string, fallback?: string): string {
   const value = process.env[name] ?? fallback;
@@ -98,7 +94,6 @@ export function loadConfig(): ServerConfig {
     oauthIssuer: issuer,
     corsAllowedOrigins: cors,
     logLevel: logLevelRaw as ServerConfig['logLevel'],
-    rateLimitPerMinute: optionalInt('MCP_RATE_LIMIT_PER_MINUTE', DEFAULT_RATE_LIMIT),
     metricsAuthToken: process.env.MCP_METRICS_TOKEN || undefined,
     edgeToken: process.env.MCP_EDGE_TOKEN || undefined,
   };

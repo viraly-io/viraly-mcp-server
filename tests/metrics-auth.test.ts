@@ -17,7 +17,6 @@ const baseConfig: ServerConfig = {
   oauthIssuer: 'https://api.test.viraly.io',
   corsAllowedOrigins: [],
   logLevel: 'silent',
-  rateLimitPerMinute: 300,
   metricsAuthToken: undefined,
 };
 
