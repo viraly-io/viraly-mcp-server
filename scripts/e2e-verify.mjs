@@ -183,7 +183,7 @@ section('6. Authorization header reaches the origin (CloudFront forwarding)');
     check('Authorization forwarded to origin', res.status === 200, `status ${res.status}`);
   }
   const tools = json?.result?.tools ?? [];
-  check('tools/list returned 35 tools', tools.length === 35, `got ${tools.length}`);
+  check('tools/list returned 36 tools', tools.length === 36, `got ${tools.length}`);
   check('response is JSON, not SSE', (res.headers.get('content-type') || '').includes('application/json'));
   check('a known write tool is present', tools.some((t) => t.name === 'schedule_post'));
 }

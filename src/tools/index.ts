@@ -34,6 +34,8 @@ import './write/cancel-post.js';
 import './write/create-draft.js';
 import './write/upload-media.js';
 import './write/generate-image.js';
+// Read-only poll for generate_image; lives under write/ next to the tool it pairs with.
+import './write/get-image-job.js';
 import './write/generate-caption.js';
 import './write/generate-hashtags.js';
 import './write/update-social-set-timezone.js';

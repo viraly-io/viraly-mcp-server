@@ -133,7 +133,8 @@ Any MCP-compliant client over Streamable HTTP works. Point it at `https://mcp.vi
 |---|---|
 | `generate_caption` | Generate or transform a caption (write-new, rephrase, shorten, expand, casualize, formalize). |
 | `generate_hashtags` | Generate a relevant hashtag set for a topic or caption. |
-| `generate_image` | Generate an image (DALL-E) and save it to the media library. HD requires Business+. |
+| `generate_image` | Start generating an image and saving it to the media library. Returns a job id in about a second; generation takes about a minute. HD requires Business+. |
+| `get_image_job` | Poll a `generate_image` job until it succeeds (carries the attachment id) or fails. |
 
 ### Bio links
 

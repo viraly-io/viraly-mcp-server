@@ -113,7 +113,7 @@ function formatToolError(err: unknown): string {
     return `Viraly API error: ${err.message}`;
   }
   if (err instanceof z.ZodError) {
-    return `Invalid input: ${err.errors.map((e) => `${e.path.join('.')} — ${e.message}`).join('; ')}`;
+    return `Invalid input: ${err.errors.map((e) => `${e.path.join('.')}: ${e.message}`).join('; ')}`;
   }
   if (err instanceof Error) {
     return `Unexpected error: ${err.message}`;

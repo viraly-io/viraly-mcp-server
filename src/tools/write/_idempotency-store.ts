@@ -34,12 +34,18 @@ export const DONE_TTL_MS = 60_000;
  * HTTP timeout, because a Lambda killed at its deadline never runs `abandon`.
  *
  * The ordering the deployment must preserve:
- *   upstream HTTP timeout (30s)
- *     < Lambda timeout (40s)         so the app returns its own error
- *     < CLAIM_TTL (45s)              so a killed invocation's claim outlives it
- *     < CloudFront readTimeout (60s) so the edge surfaces the app's error
+ *   upstream HTTP timeout (45s)
+ *     < Lambda timeout (55s)         so the app returns its own error
+ *     < CLAIM_TTL (60s)              so a killed invocation's claim outlives it
+ *     < CloudFront readTimeout (75s) so the edge surfaces the app's error
+ *
+ * All four moved together in the gpt-image-2 incident (2026-08-03). They are a
+ * single unit: raising any one of them alone reintroduces the failure the
+ * ordering exists to prevent. The two Lambda-side values live in
+ * `viraly-cdk-serverless/aws-cdk/config/{prod,beta}-stack-props.json` as
+ * `timeoutSeconds` and `originReadTimeoutSeconds`.
  */
-export const CLAIM_TTL_MS = 45_000;
+export const CLAIM_TTL_MS = 60_000;
 
 export type ClaimOutcome =
   /** We own this operation. Run it, then call `complete` or `abandon`. */

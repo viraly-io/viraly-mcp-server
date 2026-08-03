@@ -30,7 +30,22 @@ export interface ViralyClientOptions {
   timeoutMs?: number;
 }
 
-const DEFAULT_TIMEOUT_MS = 30_000;
+/**
+ * How long to wait on the Viraly API before giving up.
+ *
+ * This is the tightest hop in the chain, so it is what a slow upstream actually
+ * hits. It is NOT free to change on its own: it participates in the four-way
+ * ordering documented in `tools/write/_idempotency-store.ts`, and every value
+ * there has to move with it.
+ *
+ * 30s was chosen when the slowest write was a few seconds. It stopped being
+ * enough the day image generation moved to gpt-image-2, which runs 60-68s in
+ * production, and it sat uncomfortably close to several analytics and media
+ * calls besides. Long-running work now returns a job handle instead of holding
+ * the connection open, so this only has to cover ordinary calls with room to
+ * spare rather than the worst case any single tool can produce.
+ */
+const DEFAULT_TIMEOUT_MS = 45_000;
 
 interface RequestOptions {
   method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
@@ -114,7 +129,7 @@ export class ViralyClient {
         throw new ViralyAmbiguousWriteError(
           `Upstream ${options.method} timed out after ${this.timeoutMs}ms; ` +
             'the operation may have completed. Verify current state (e.g. list the ' +
-            'resource) before retrying — retrying blindly can create a duplicate or ' +
+            'resource) before retrying. Retrying blindly can create a duplicate or ' +
             're-consume quota.',
         );
       }

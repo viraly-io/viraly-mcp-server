@@ -14,7 +14,7 @@ production deployment to be live first (Phase 5 CTO handoff).
 - **Supports DCR:** yes (RFC 7591 at `https://api.viraly.io/api/oauth/register`)
 - **Logo:** `assets/viraly-mcp-logo.png` — 540×540 PNG, transparent background (Viraly hummingbird)
 - **Short description:** "Schedule social posts, generate captions, and check analytics across 11+ platforms — directly from Claude."
-- **Tool count:** 18 (11 read, 7 write)
+- **Tool count:** 36 (21 read, 15 write)
 - **Privacy policy:** https://viraly.io/privacy-policy
 - **Terms of service:** https://viraly.io/terms-of-service
 - **Support email:** support@viraly.io
@@ -22,7 +22,7 @@ production deployment to be live first (Phase 5 CTO handoff).
 **Pre-flight checks:**
 - [ ] Production server returns 200 on `/health`
 - [ ] OAuth flow works end-to-end with a fresh test account
-- [ ] All 18 tools list via `tools/list`
+- [ ] All 36 tools list via `tools/list`
 - [ ] Tool schemas validate cleanly (no missing descriptions)
 
 ## 2. ChatGPT — Apps & Connectors

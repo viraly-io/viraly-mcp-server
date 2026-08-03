@@ -92,10 +92,12 @@ describe('write tools registered', () => {
     );
   });
 
-  it('total tool count is 35 (20 read + 15 write)', () => {
+  // get_image_job lives under src/tools/write/ next to generate_image but is a
+  // read: it polls a job and mutates nothing, so it counts on the read side.
+  it('total tool count is 36 (21 read + 15 write)', () => {
     const tools = listRegisteredTools();
-    expect(tools.length).toBe(35);
-    expect(tools.filter((t) => !t.isWrite).length).toBe(20);
+    expect(tools.length).toBe(36);
+    expect(tools.filter((t) => !t.isWrite).length).toBe(21);
     expect(tools.filter((t) => t.isWrite).length).toBe(15);
   });
 });
@@ -772,19 +774,20 @@ describe('write dedupe (retries do not duplicate upstream writes)', () => {
 });
 
 describe('generate_image', () => {
-  it('forwards plan-relevant fields', async () => {
-    mockResponse(200, { id: 'att1', url: 'https://cdn/x.png', type: 'Photo' });
+  it('starts a job on the async endpoint and forwards plan-relevant fields', async () => {
+    mockResponse(202, { id: 'job1', status: 'Pending', prompt: 'a cat' });
     const tool = findTool('generate_image');
-    await runWithTokenContext({ accessToken: 'vat_abc' }, async () =>
+    const result = (await runWithTokenContext({ accessToken: 'vat_abc' }, async () =>
       tool.handler({
         prompt: 'a cat',
         aspect_ratio: 'portrait',
         quality: 'hd',
         use_brand_palette: false,
       }),
-    );
+    )) as Record<string, unknown>;
+
     const [url, options] = mockedRequest.mock.calls[0]!;
-    expect(String(url)).toContain('/api/platforms/ai/generate-image');
+    expect(String(url)).toContain('/api/platforms/ai/generate-image-async');
     const body = JSON.parse((options as { body: string }).body);
     expect(body).toEqual({
       prompt: 'a cat',
@@ -792,5 +795,69 @@ describe('generate_image', () => {
       quality: 'hd',
       useBrandPalette: false,
     });
+
+    // The tool must hand back a job handle, never an attachment: the image does
+    // not exist yet when this returns.
+    expect(result.job_id).toBe('job1');
+    expect(result.status).toBe('Pending');
+    expect(result.attachment_id).toBeUndefined();
+    expect(String(result.next_step)).toContain('get_image_job');
+  });
+});
+
+describe('get_image_job', () => {
+  it('polls the job endpoint and nudges the model to wait while running', async () => {
+    mockResponse(200, { id: 'job1', status: 'Running', prompt: 'a cat' });
+    const tool = findTool('get_image_job');
+    const result = (await runWithTokenContext({ accessToken: 'vat_abc' }, async () =>
+      tool.handler({ job_id: 'job1' }),
+    )) as Record<string, unknown>;
+
+    const [url, options] = mockedRequest.mock.calls[0]!;
+    expect(String(url)).toContain('/api/platforms/ai/image-jobs/job1');
+    expect((options as { method: string }).method).toBe('GET');
+    expect(result.status).toBe('Running');
+    expect(String(result.next_step)).toContain('Wait');
+  });
+
+  it('flattens the attachment once the job succeeds and stops nudging', async () => {
+    mockResponse(200, {
+      id: 'job1',
+      status: 'Succeeded',
+      attachment: {
+        id: 'att1',
+        type: 'Photo',
+        info: { url: 'https://cdn/x.png', width: 1024, height: 1536 },
+        thumbnails: { medium: { url: 'https://cdn/x-m.png' } },
+      },
+    });
+    const tool = findTool('get_image_job');
+    const result = (await runWithTokenContext({ accessToken: 'vat_abc' }, async () =>
+      tool.handler({ job_id: 'job1' }),
+    )) as Record<string, unknown>;
+
+    expect(result.attachment_id).toBe('att1');
+    expect(result.url).toBe('https://cdn/x.png');
+    expect(result.thumbnail_url).toBe('https://cdn/x-m.png');
+    expect(result.width).toBe(1024);
+    expect(result.next_step).toBeUndefined();
+  });
+
+  it('surfaces the failure reason on a failed job', async () => {
+    mockResponse(200, {
+      id: 'job1',
+      status: 'Failed',
+      errorCode: 'prompt-rejected',
+      errorMessage: "We couldn't generate an image for that prompt.",
+    });
+    const tool = findTool('get_image_job');
+    const result = (await runWithTokenContext({ accessToken: 'vat_abc' }, async () =>
+      tool.handler({ job_id: 'job1' }),
+    )) as Record<string, unknown>;
+
+    expect(result.status).toBe('Failed');
+    expect(result.error_code).toBe('prompt-rejected');
+    expect(result.attachment_id).toBeUndefined();
+    expect(result.next_step).toBeUndefined();
   });
 });

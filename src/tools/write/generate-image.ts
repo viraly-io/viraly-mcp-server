@@ -1,14 +1,9 @@
 import { z } from 'zod';
 
 import { getClient } from '../../api/client-factory.js';
-import { type AttachmentUpstream } from '../read/_post-shape.js';
 import { registerTool } from '../registry.js';
 import { deriveIdempotencyKey } from './_idempotency.js';
-
-/** The generate-image endpoint returns a full AttachmentDto. */
-interface AttachmentDtoUpstream extends AttachmentUpstream {
-  id: string;
-}
+import { type AiImageJobUpstream, describeJob } from './_ai-image-job.js';
 
 const inputSchema = z.object({
   prompt: z
@@ -38,16 +33,23 @@ const inputSchema = z.object({
 registerTool({
   name: 'generate_image',
   description:
-    'Generate an image using AI (DALL-E) and save it to the workspace\'s media library. Returns an attachment id usable in schedule_post or create_draft. Plan-gated: Free users get an upgrade-required error; HD quality requires Business+.',
+    'Start generating an image using AI and saving it to the workspace\'s media library. ' +
+    'This returns in about a second with a job id, NOT with the image: generation itself takes ' +
+    'roughly a minute. Poll get_image_job with the returned job id, waiting about 10 seconds ' +
+    'between polls, until its status is "Succeeded" (the attachment id is on that response) or ' +
+    '"Failed". Do not call this tool again while a job is still running; that starts a second ' +
+    'generation and consumes more of the workspace quota. Plan-gated: Free users get an ' +
+    'upgrade-required error; HD quality requires Business+. Both are reported here, immediately, ' +
+    'rather than a minute later.',
   inputSchema,
   isWrite: true,
   handler: async (input) => {
     const idempotencyKey = deriveIdempotencyKey('generate_image', input, input.idempotency_key);
     const client = getClient({ idempotencyKey });
 
-    const attachment = await client.call<AttachmentDtoUpstream>({
+    const job = await client.call<AiImageJobUpstream>({
       method: 'POST',
-      path: '/api/platforms/ai/generate-image',
+      path: '/api/platforms/ai/generate-image-async',
       idempotent: true,
       body: {
         prompt: input.prompt,
@@ -57,15 +59,12 @@ registerTool({
       },
     });
 
-    // AttachmentDto nests file metadata under info and thumbnails — there are
-    // no top-level url/width/etc fields on the wire.
     return {
-      attachment_id: attachment.id,
-      url: attachment.info?.url,
-      thumbnail_url: attachment.thumbnails?.medium?.url ?? attachment.thumbnails?.small?.url,
-      width: attachment.info?.width,
-      height: attachment.info?.height,
-      type: attachment.type,
+      ...describeJob(job),
+      next_step:
+        `Generation has started and normally takes about a minute. Call get_image_job with ` +
+        `job_id "${job.id}", waiting about 10 seconds between calls, until status is Succeeded ` +
+        `or Failed. Do not call generate_image again for this image.`,
     };
   },
 });
