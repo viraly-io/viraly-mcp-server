@@ -197,6 +197,12 @@ export function createHttpApp(config: ServerConfig, logger: Logger): Express {
   // Returning 405 is what the MCP spec prescribes for servers that do not
   // offer the stream, and clients handle it: the SDK only attempts the GET
   // after a 202 on notifications/initialized, then treats 405 as "no stream".
+  //
+  // This is exactly why `registerAllTools` declares `tools.listChanged: false`.
+  // The two have to stay consistent: no stream here means no way to deliver
+  // `notifications/tools/list_changed`, so promising it in the capabilities
+  // would be a contract we cannot honour. If this ever starts offering the
+  // stream, revisit that declaration.
   app.get('/mcp', auth, (_req, res) => {
     res
       .status(405)
