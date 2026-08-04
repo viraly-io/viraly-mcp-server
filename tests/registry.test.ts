@@ -1,6 +1,7 @@
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { describe, expect, it } from 'vitest';
 
-import { listRegisteredTools } from '../src/tools/registry.js';
+import { listRegisteredTools, registerAllTools } from '../src/tools/registry.js';
 // Side-effect import — registers all tools.
 import '../src/tools/index.js';
 
@@ -36,5 +37,20 @@ describe('tool registry', () => {
     for (const tool of listRegisteredTools()) {
       expect(tool.description.length).toBeGreaterThan(20);
     }
+  });
+
+  // The SDK calls registerCapabilities({ tools: { listChanged: true } }) inside
+  // every registerTool, so this reverts the moment the override in
+  // registerAllTools is dropped, reordered after connect, or lost in an SDK
+  // upgrade. Nothing else would fail: the server would simply resume promising
+  // a notification it has no channel to send.
+  it('does not advertise tools.listChanged, which it cannot deliver', () => {
+    const server = new McpServer({ name: 'viraly-test', version: '0.0.0' });
+    registerAllTools(server);
+
+    // getCapabilities() is what the initialize response reports to a client.
+    const caps = server.server.getCapabilities();
+    expect(caps.tools).toBeDefined();
+    expect(caps.tools?.listChanged).toBe(false);
   });
 });

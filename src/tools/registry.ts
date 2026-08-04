@@ -78,6 +78,31 @@ export function registerAllTools(server: McpServer): void {
       },
     );
   }
+
+  // Correct the capability the SDK just declared on our behalf.
+  //
+  // `registerTool` calls `registerCapabilities({ tools: { listChanged: true } })`
+  // internally, so a server that registers any tool advertises that it will send
+  // `notifications/tools/list_changed` when its tool list changes. This server
+  // cannot: `GET /mcp` returns 405 on purpose (an open SSE stream would pin a
+  // Lambda invocation until the platform kills it), responses are buffered JSON,
+  // and the transport is stateless. There is no channel to push a notification
+  // down, and the tool list is fixed for the life of the process anyway.
+  //
+  // Advertising it was not harmless. It tells a client "wait, I will tell you" -
+  // an invitation to cache the tool list indefinitely. What actually saves us is
+  // that clients re-run initialize + tools/list on their own every 1-2 hours
+  // (measured in production), which is a behaviour we should not silently depend
+  // on while claiming a contract we do not honour. Declaring false tells a client
+  // the truth: nothing is coming, so refresh on your own schedule.
+  //
+  // Must run BEFORE `server.connect(transport)` - registerCapabilities throws
+  // once a transport is attached. Both transports register tools first, which is
+  // why this lives here rather than in each of them.
+  //
+  // If a future change makes the tool list dynamic, deliver the notification
+  // first and only then flip this back to true.
+  server.server.registerCapabilities({ tools: { listChanged: false } });
 }
 
 export function listRegisteredTools(): readonly ToolDefinition[] {
