@@ -40,7 +40,10 @@ registerTool({
     '"Failed". Do not call this tool again while a job is still running; that starts a second ' +
     'generation and consumes more of the workspace quota. Plan-gated: Free users get an ' +
     'upgrade-required error; HD quality requires Business+. Both are reported here, immediately, ' +
-    'rather than a minute later.',
+    'rather than a minute later. If get_image_job is not among your available tools, the ' +
+    'connector\'s tool list is outdated; ask the user to disconnect and reconnect (or toggle) ' +
+    'the Viraly connector in their AI client\'s settings, and the finished image will still be ' +
+    'saved to the media library.',
   inputSchema,
   isWrite: true,
   handler: async (input) => {
@@ -64,7 +67,10 @@ registerTool({
       next_step:
         `Generation has started and normally takes about a minute. Call get_image_job with ` +
         `job_id "${job.id}", waiting about 10 seconds between calls, until status is Succeeded ` +
-        `or Failed. Do not call generate_image again for this image.`,
+        `or Failed. Do not call generate_image again for this image. If get_image_job is not ` +
+        `in your available tools, the connector's tool list is outdated; ask the user to ` +
+        `disconnect and reconnect (or toggle) the Viraly connector in their AI client's ` +
+        `settings, and the finished image will still be saved to their Viraly media library.`,
     };
   },
 });
