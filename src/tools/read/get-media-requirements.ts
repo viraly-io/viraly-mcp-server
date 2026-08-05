@@ -27,7 +27,7 @@ const REQUIREMENTS: Record<Platform, unknown> = {
     image_post: { max_file_size: '10MB', max_count: 10, formats: ['JPEG', 'PNG'] },
     gif: { max_file_size: '8MB', max_dimensions: '1280x1080', formats: ['GIF'] },
     video_reel: { max_file_size: '1GB', duration: '3s-240min', formats: ['MP4', 'MOV', 'WebM'] },
-    video_story: { aspect_ratio: '9:16', min_resolution: '540x960', max_file_size: '1GB', duration: '3s-90s' },
+    video_story: { aspect_ratio: '9:16', min_resolution: '540x960', max_file_size: '1GB', duration: '3s-60s' },
     caption: { max_chars: 5000, comment_max_chars: 8000 },
   },
   Twitter: {
@@ -42,7 +42,7 @@ const REQUIREMENTS: Record<Platform, unknown> = {
     notes: ['Title required', 'No angle brackets (< >) in title/description', 'Max 60 hashtags total'],
   },
   TikTok: {
-    video: { resolution: '360x360 to 4096x4096', max_file_size: '4GB', formats: ['MP4', 'WebM', 'MOV'], caption_max_chars: 2200, note: 'Max duration varies by creator account and is enforced by TikTok at publish time, not at scheduling — keep videos within the creator\'s allowed length or the publish will fail' },
+    video: { resolution: '360x360 to 4096x4096', min_duration: '3s', max_file_size: '4GB', formats: ['MP4', 'WebM', 'MOV'], caption_max_chars: 2200, note: 'Minimum duration is 3s. Max duration varies by creator account and is enforced by TikTok at publish time, not at scheduling — keep videos within the creator\'s allowed length or the publish will fail' },
     photo_post: { max_file_size: '10MB', max_count: 35, resolution: '<=1920x1080 or <=1080x1920', formats: ['JPEG', 'WebP'], caption_max_chars: 4000, title_max_chars: 90 },
   },
   Pinterest: {
