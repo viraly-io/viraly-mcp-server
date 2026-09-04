@@ -806,18 +806,45 @@ describe('generate_image', () => {
 });
 
 describe('get_image_job', () => {
-  it('polls the job endpoint and nudges the model to wait while running', async () => {
+  it('waits on the server and returns as soon as the job finishes', async () => {
     mockResponse(200, { id: 'job1', status: 'Running', prompt: 'a cat' });
+    mockResponse(200, {
+      id: 'job1',
+      status: 'Succeeded',
+      attachment: { id: 'att1', type: 'Photo', info: { url: 'https://cdn/x.png' } },
+    });
     const tool = findTool('get_image_job');
-    const result = (await runWithTokenContext({ accessToken: 'vat_abc' }, async () =>
+    const pending = runWithTokenContext({ accessToken: 'vat_abc' }, async () =>
       tool.handler({ job_id: 'job1' }),
-    )) as Record<string, unknown>;
+    );
+    // First GET answers Running; the handler sleeps 4s (fake timer) and polls again.
+    await vi.advanceTimersByTimeAsync(4_000);
+    const result = (await pending) as Record<string, unknown>;
 
     const [url, options] = mockedRequest.mock.calls[0]!;
     expect(String(url)).toContain('/api/platforms/ai/image-jobs/job1');
     expect((options as { method: string }).method).toBe('GET');
+    expect(mockedRequest).toHaveBeenCalledTimes(2);
+    expect(result.status).toBe('Succeeded');
+    expect(result.attachment_id).toBe('att1');
+    expect(result.next_step).toBeUndefined();
+  });
+
+  it('stops waiting after its budget and nudges the model to call again', async () => {
+    // 40s budget / 4s interval = 10 re-polls after the initial GET.
+    for (let i = 0; i < 11; i += 1) {
+      mockResponse(200, { id: 'job1', status: 'Running', prompt: 'a cat' });
+    }
+    const tool = findTool('get_image_job');
+    const pending = runWithTokenContext({ accessToken: 'vat_abc' }, async () =>
+      tool.handler({ job_id: 'job1' }),
+    );
+    await vi.advanceTimersByTimeAsync(41_000);
+    const result = (await pending) as Record<string, unknown>;
+
+    expect(mockedRequest).toHaveBeenCalledTimes(11);
     expect(result.status).toBe('Running');
-    expect(String(result.next_step)).toContain('Wait');
+    expect(String(result.next_step)).toContain('again');
   });
 
   it('flattens the attachment once the job succeeds and stops nudging', async () => {
