@@ -94,10 +94,10 @@ describe('write tools registered', () => {
 
   // get_image_job lives under src/tools/write/ next to generate_image but is a
   // read: it polls a job and mutates nothing, so it counts on the read side.
-  it('total tool count is 36 (21 read + 15 write)', () => {
+  it('total tool count is 37 (22 read + 15 write)', () => {
     const tools = listRegisteredTools();
-    expect(tools.length).toBe(36);
-    expect(tools.filter((t) => !t.isWrite).length).toBe(21);
+    expect(tools.length).toBe(37);
+    expect(tools.filter((t) => !t.isWrite).length).toBe(22);
     expect(tools.filter((t) => t.isWrite).length).toBe(15);
   });
 });
