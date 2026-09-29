@@ -26,8 +26,11 @@ export interface AiImageJobUpstream {
 }
 
 /**
- * Flatten a job into the fields a model needs. The attachment is present only
- * once the job succeeds, so `attachment_id` doubles as "is it ready".
+ * Flatten a job into the fields a model needs. The attachment is present once
+ * the job succeeds, but the image is usable only once its row is "Completed":
+ * the media processor measures the file after the job has written it (media
+ * ingest flow, rule 8), so `ready` comes from the row's status and never from
+ * the job's.
  */
 export function describeJob(job: AiImageJobUpstream): Record<string, unknown> {
   const attachment = job.attachment ?? undefined;
@@ -35,6 +38,8 @@ export function describeJob(job: AiImageJobUpstream): Record<string, unknown> {
   return {
     job_id: job.id,
     status: job.status,
+    attachment_status: attachment?.status,
+    ready: isReady(job),
     prompt: job.prompt,
     aspect_ratio: job.aspectRatio,
     quality: job.quality,
@@ -56,4 +61,17 @@ export function describeJob(job: AiImageJobUpstream): Record<string, unknown> {
 /** True once the job will never change again. */
 export function isTerminal(status: string): boolean {
   return status === 'Succeeded' || status === 'Failed';
+}
+
+/** True once the image can be attached to a post: the job succeeded and its row is Completed. */
+export function isReady(job: AiImageJobUpstream): boolean {
+  return job.status === 'Succeeded' && job.attachment?.status === 'Completed';
+}
+
+/**
+ * True while a call of get_image_job should keep waiting: the job is still
+ * running, or it succeeded and the processor has not finished the row yet.
+ */
+export function isSettled(job: AiImageJobUpstream): boolean {
+  return job.status === 'Failed' || isReady(job);
 }
