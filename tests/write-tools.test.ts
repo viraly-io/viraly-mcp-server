@@ -811,7 +811,7 @@ describe('get_image_job', () => {
     mockResponse(200, {
       id: 'job1',
       status: 'Succeeded',
-      attachment: { id: 'att1', type: 'Photo', info: { url: 'https://cdn/x.png' } },
+      attachment: { id: 'att1', type: 'Photo', status: 'Completed', info: { url: 'https://cdn/x.png' } },
     });
     const tool = findTool('get_image_job');
     const pending = runWithTokenContext({ accessToken: 'vat_abc' }, async () =>
@@ -854,6 +854,7 @@ describe('get_image_job', () => {
       attachment: {
         id: 'att1',
         type: 'Photo',
+        status: 'Completed',
         info: { url: 'https://cdn/x.png', width: 1024, height: 1536 },
         thumbnails: { medium: { url: 'https://cdn/x-m.png' } },
       },
@@ -868,6 +869,53 @@ describe('get_image_job', () => {
     expect(result.thumbnail_url).toBe('https://cdn/x-m.png');
     expect(result.width).toBe(1024);
     expect(result.next_step).toBeUndefined();
+  });
+
+  // Media ingest review, entry point 43 (package 7): a job reports the image usable only when the
+  // row is Completed. A Succeeded job whose row is still Uploading or Processing is not ready.
+  it('keeps waiting on a Succeeded job until its attachment is Completed, then reports ready', async () => {
+    mockResponse(200, {
+      id: 'job1',
+      status: 'Succeeded',
+      attachment: { id: 'att1', type: 'Photo', status: 'Uploading', info: { url: 'https://cdn/x.png' } },
+    });
+    mockResponse(200, {
+      id: 'job1',
+      status: 'Succeeded',
+      attachment: { id: 'att1', type: 'Photo', status: 'Completed', info: { url: 'https://cdn/x.png' } },
+    });
+    const tool = findTool('get_image_job');
+    const pending = runWithTokenContext({ accessToken: 'vat_abc' }, async () =>
+      tool.handler({ job_id: 'job1' }),
+    );
+    await vi.advanceTimersByTimeAsync(4_000);
+    const result = (await pending) as Record<string, unknown>;
+
+    expect(mockedRequest).toHaveBeenCalledTimes(2);
+    expect(result.ready).toBe(true);
+    expect(result.attachment_status).toBe('Completed');
+    expect(result.next_step).toBeUndefined();
+  });
+
+  it('reports a Succeeded job whose attachment is still Uploading as not ready', async () => {
+    for (let i = 0; i < 11; i += 1) {
+      mockResponse(200, {
+        id: 'job1',
+        status: 'Succeeded',
+        attachment: { id: 'att1', type: 'Photo', status: 'Uploading', info: { url: 'https://cdn/x.png' } },
+      });
+    }
+    const tool = findTool('get_image_job');
+    const pending = runWithTokenContext({ accessToken: 'vat_abc' }, async () =>
+      tool.handler({ job_id: 'job1' }),
+    );
+    await vi.advanceTimersByTimeAsync(41_000);
+    const result = (await pending) as Record<string, unknown>;
+
+    expect(result.status).toBe('Succeeded');
+    expect(result.ready).toBe(false);
+    expect(result.attachment_status).toBe('Uploading');
+    expect(String(result.next_step)).toContain('again');
   });
 
   it('surfaces the failure reason on a failed job', async () => {

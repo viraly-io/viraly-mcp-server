@@ -12,7 +12,7 @@ import { z } from 'zod';
 
 import { getClient } from '../../api/client-factory.js';
 import { registerTool } from '../registry.js';
-import { type AiImageJobUpstream, describeJob, isTerminal } from './_ai-image-job.js';
+import { type AiImageJobUpstream, describeJob, isSettled } from './_ai-image-job.js';
 
 /**
  * How long one get_image_job call may wait for the job before answering. Kept
@@ -37,8 +37,9 @@ registerTool({
     'Check an image generation started by generate_image. This call waits on the server for ' +
     'up to about 40 seconds and returns as soon as the job finishes, so one or two calls are ' +
     'normally enough; if it comes back still "Pending" or "Running" nothing has gone wrong, ' +
-    'just call it again with the same job_id. "Succeeded" carries the attachment id to use in ' +
-    'schedule_post or create_draft; "Failed" carries an error message safe to show the user. ' +
+    'just call it again with the same job_id. "Succeeded" with ready true carries the attachment id ' +
+    'to use in schedule_post or create_draft (ready is false while the image is still being ' +
+    'processed: call again); "Failed" carries an error message safe to show the user. ' +
     'Never restart the generation while a job is still Pending or Running.',
   inputSchema,
   // Read-only: it inspects a job, it does not create or change one.
@@ -56,17 +57,19 @@ registerTool({
     // 55s Lambda, 60s MCP-client and 75s CloudFront budgets) turns the whole
     // flow into one or two calls for them. Each upstream GET is milliseconds,
     // so the only thing held open is this Lambda invocation.
-    while (!isTerminal(job.status) && Date.now() < deadline) {
+    while (!isSettled(job) && Date.now() < deadline) {
       await sleep(POLL_INTERVAL_MS);
       job = await client.call<AiImageJobUpstream>({ method: 'GET', path });
     }
 
     const described = describeJob(job);
 
-    if (isTerminal(job.status)) {
+    if (isSettled(job)) {
       return described;
     }
 
+    // A Succeeded job whose row is not Completed yet is not usable either: the
+    // processor is still measuring the file. Same nudge, same call.
     return {
       ...described,
       next_step:
