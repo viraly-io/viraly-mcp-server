@@ -90,7 +90,7 @@ const inputSchema = z.object({
 registerTool({
   name: 'get_media_requirements',
   description:
-    'Return the per-platform media and caption requirements (allowed formats, max file size, dimensions/aspect ratio, video duration, attachment counts, caption length, hashtag limits) enforced when scheduling a post. Call this BEFORE attaching media or writing a caption so the post passes validation on the first try. The API validates the same rules server-side and returns a friendly error listing exactly what to fix; note that video duration/dimension limits are best-effort because Viraly does not always measure server-side, so the target platform may still reject a non-conforming video.',
+    'Return the per-platform media and caption requirements (allowed formats, max file size, dimensions/aspect ratio, video duration, attachment counts, caption length, hashtag limits) enforced when scheduling a post. Call this BEFORE attaching media or writing a caption so the post passes validation on the first try. The API validates the same rules server-side and returns a friendly error listing exactly what to fix: Viraly measures every file on its servers, and a post is judged by the measured values once its media is ready.',
   inputSchema,
   handler: async (input) => {
     if (input.platform) {
