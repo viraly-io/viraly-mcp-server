@@ -7,6 +7,7 @@
  */
 
 import { type AttachmentUpstream } from '../read/_post-shape.js';
+import { describeMediaFailure, MEDIA_FAILURE_CODES } from './_media-outcome.js';
 
 /** AiImageJobDto as serialized by the Platform API. */
 export interface AiImageJobUpstream {
@@ -40,6 +41,7 @@ export function describeJob(job: AiImageJobUpstream): Record<string, unknown> {
     status: job.status,
     attachment_status: attachment?.status,
     ready: isReady(job),
+    failed: isFailed(job),
     prompt: job.prompt,
     aspect_ratio: job.aspectRatio,
     quality: job.quality,
@@ -52,7 +54,12 @@ export function describeJob(job: AiImageJobUpstream): Record<string, unknown> {
     height: attachment?.info?.height,
     type: attachment?.type,
     error_code: job.errorCode ?? undefined,
-    error_message: job.errorMessage ?? undefined,
+    // A job that failed with its row's code carries the row's message, which is the media processor's and can
+    // hold internal detail: such a code is described in plain words instead.
+    error_message:
+      job.errorCode && MEDIA_FAILURE_CODES.has(job.errorCode)
+        ? describeMediaFailure(job.errorCode)
+        : (job.errorMessage ?? undefined),
     started_at: job.startedAt ?? undefined,
     completed_at: job.completedAt ?? undefined,
   };
@@ -73,5 +80,10 @@ export function isReady(job: AiImageJobUpstream): boolean {
  * running, or it succeeded and the processor has not finished the row yet.
  */
 export function isSettled(job: AiImageJobUpstream): boolean {
-  return job.status === 'Failed' || isReady(job);
+  return isFailed(job) || isReady(job);
+}
+
+/** True once the image will never be usable: the job failed, or its row ended Failed. */
+export function isFailed(job: AiImageJobUpstream): boolean {
+  return job.status === 'Failed' || job.attachment?.status === 'Failed';
 }

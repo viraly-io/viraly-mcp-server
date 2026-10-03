@@ -116,9 +116,10 @@ export class ViralyClient {
       // A client-side timeout/abort on a mutating request is ambiguous: the
       // upstream write may have already completed (quota decremented, post
       // created) even though we never received the response. Surface a
-      // NON-retryable error so the model verifies state before retrying —
-      // because the Idempotency-Key header is not yet honored upstream, a
-      // blind retry would duplicate the write / double-charge quota.
+      // NON-retryable error so the model verifies state before retrying: the
+      // API honours the Idempotency-Key only on media creates, so a blind retry
+      // of another write could duplicate it or double-charge quota. Tools whose
+      // route honours the key say so in their own message (upload_media).
       const isWriteMethod = options.method !== 'GET';
       const isTimeoutOrAbort =
         err instanceof Error &&

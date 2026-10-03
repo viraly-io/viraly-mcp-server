@@ -1,6 +1,6 @@
 {
   "name": "@viraly/mcp",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "description": "Viraly Model Context Protocol server — connect Viraly to Claude, ChatGPT, Cursor, and other LLM clients.",
   "license": "MIT",

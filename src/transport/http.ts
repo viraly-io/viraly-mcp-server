@@ -272,7 +272,7 @@ function normalizeRawHeaders(req: Request, _res: Response, next: NextFunction): 
 function createMcpServer(): McpServer {
   const server = new McpServer({
     name: 'viraly',
-    version: '0.1.0',
+    version: '0.2.0',
   });
   registerAllTools(server);
   return server;

@@ -14,10 +14,11 @@ import {
  * identify the operation. Two LLM tool calls with the same args produce the
  * same key.
  *
- * IMPORTANT: the upstream Viraly Platform API does NOT currently honor the
- * `Idempotency-Key` header — it is a no-op server-side. We therefore cannot
- * rely on the server to dedupe a retried write. To still give the model the
- * safe-retry behavior the tool descriptions imply, `dedupeWrite` provides a
+ * The upstream Viraly Platform API honours the `Idempotency-Key` header on
+ * media creates (from-url and the media route) and on a post write's inline
+ * media urls (media ingest package 13), but it does not dedupe the post writes
+ * themselves. To give the model the safe-retry behavior the tool descriptions
+ * imply for those too, `dedupeWrite` provides a
  * short-lived, in-process result cache keyed by this idempotency key: a retry
  * with identical args within the TTL returns the cached result instead of
  * issuing a second mutating call. This protects against duplicate

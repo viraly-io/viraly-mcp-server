@@ -758,8 +758,10 @@ describe('write dedupe (retries do not duplicate upstream writes)', () => {
   });
 
   it('upload_media with identical inputs issues only one upstream call', async () => {
-    mockResponse(200, { id: 'att1', info: { url: 'https://cdn/x.jpg' }, type: 'Photo' });
-    mockResponse(200, { id: 'att2', info: { url: 'https://cdn/y.jpg' }, type: 'Photo' });
+    // The API answers a photo once the processor has finished it (its window), so the
+    // answer carries status Completed and the tool needs no read of the row.
+    mockResponse(200, { id: 'att1', status: 'Completed', info: { url: 'https://cdn/x.jpg' }, type: 'Photo' });
+    mockResponse(200, { id: 'att2', status: 'Completed', info: { url: 'https://cdn/y.jpg' }, type: 'Photo' });
     const tool = findTool('upload_media');
     const args = { url: 'https://example.com/x.jpg', social_set_id: 'ss1' };
     const first = await runWithTokenContext({ accessToken: 'vat_abc' }, async () =>
