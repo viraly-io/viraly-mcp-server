@@ -28,7 +28,7 @@ export async function startStdioTransport(logger: Logger): Promise<void> {
 
   const server = new McpServer({
     name: 'viraly',
-    version: '0.1.0',
+    version: '0.2.0',
   });
 
   const transport = new StdioServerTransport();
