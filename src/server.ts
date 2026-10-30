@@ -13,7 +13,6 @@ import { createHttpApp } from './transport/http.js';
 import { startStdioTransport } from './transport/stdio.js';
 // Side-effect import — pulls every tool module which calls registerTool().
 // Phase 2 ships an empty index; Phase 3+ adds tool imports there.
-import './tools/index.js';
 
 async function main(): Promise<void> {
   const config = loadConfig();
