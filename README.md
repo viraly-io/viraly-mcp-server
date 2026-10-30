@@ -5,7 +5,7 @@
 
 The official [Model Context Protocol](https://modelcontextprotocol.io) server for [Viraly](https://viraly.io) — connect any MCP-aware AI assistant (Claude Desktop, Claude.ai web, ChatGPT, Cursor, custom agents built on the Anthropic / OpenAI SDKs) directly to your Viraly social-media workspace and let it schedule posts, run analytics, generate captions, and manage every channel you've connected, all in plain language.
 
-**First-class MCP support — 32+ tools, full CRUD.** Not a read-only sidekick: your AI can create, read, update, and delete across posts, channels, media, analytics, and bio links — bound by the same OAuth scopes and plan limits as the web app.
+**First-class MCP support: about 130 tools, full CRUD.** Not a read-only sidekick: your AI can create, read, update, and delete across posts, channels, media, analytics, bio links, short links, ideas, feeds and more, bound by the same OAuth scopes and plan limits as the web app.
 
 > **Available on every Viraly plan, including Free.** No API key — sign in once with OAuth and your AI assistant gets scoped, revocable access to your workspace.
 
@@ -30,7 +30,7 @@ Once connected, your AI assistant can drive Viraly using natural language:
 
 > *"Post this clip as an Instagram story today and as a YouTube Short tomorrow morning."*
 
-The MCP server exposes **32+ tools** across reading, writing, analytics, and AI generation — see the [full tool catalog](#tool-catalog) below.
+The MCP server exposes **about 130 tools** across reading, writing, analytics, and AI generation; see the [tool catalog](#tool-catalog) below.
 
 ---
 
@@ -74,89 +74,16 @@ Any MCP-compliant client over Streamable HTTP works. Point it at `https://mcp.vi
 
 ## Tool catalog
 
-32+ tools, grouped by what they do. All tools are scoped — your assistant can only call the ones whose scopes you granted at consent time.
+The tool list is not kept in this repository. Viraly's API keeps one tool registry, shared with Copilot (the assistant inside the Viraly app), and this server offers exactly what that registry offers to your connection:
 
-### Workspace & discovery
+- `tools/list` reads `GET /api/platforms/agent-tools` with your token. You see the tools your granted scopes allow, with the same names, descriptions and JSON schemas Copilot uses.
+- `tools/call` sends `POST /api/platforms/agent-tools/{name}`, where the API checks the scope and runs the same code Copilot runs.
+- Every tool that works on a social set takes `socialSetId`; call `list_social_sets` first.
+- Annotations tell your assistant what each tool does: `readOnlyHint` for reads, `destructiveHint` for actions that cannot be taken back (publishing now, deleting, disconnecting a channel). Ask your assistant to confirm those with you.
 
-| Tool | Purpose |
-|---|---|
-| `get_workspace_info` | Workspace name, plan tier (Free/Influencer/Business/Agency/Enterprise), status. |
-| `list_social_sets` | Multi-brand "social set" buckets — useful when an agency manages multiple clients in one workspace. |
-| `list_channels` | Every connected social account (Instagram, Facebook page, X, LinkedIn, etc.) with its channel id. |
-| `list_pinterest_boards` | Boards of a Pinterest channel — source of the `board_id` that Pinterest posting requires. |
-| `list_categories` | Content categories / queues configured in the workspace. |
-| `list_hashtag_groups` | Saved hashtag bundles. |
-| `list_timezones` | The IANA zone IDs Viraly accepts for scheduling. |
+The registry covers workspace and social sets, channels and posting slots, posts and the calendar (drafts, scheduling, free slots, validation, bulk moves, publishing), categories, the media library, hashtag lists, analytics, AI generation, bio pages, short links, competitors, ideas, feeds, Shopify auto-post, evergreen schedules, team, settings and billing reads. The inbox and Copilot's own tools are not offered here.
 
-### Posts — reading
-
-| Tool | Purpose |
-|---|---|
-| `list_posts` | **Recommended.** Cross-status, paginated, filterable list (social set, channel, status, date range, sort). |
-| `list_pending_posts` | Convenience: only posts scheduled for the future. |
-| `list_published_posts` | Convenience: only posts already published. |
-| `list_drafts` | Convenience: only saved drafts. |
-| `get_post` | Full details for a single post — caption, attachments, status, schedule, metrics, error. |
-
-### Posts — writing
-
-| Tool | Purpose |
-|---|---|
-| `schedule_post` | Schedule a post (specific time or next queue slot). Supports `post_type`: `feed` (default), `reel` (Facebook/Instagram), `story` (Facebook/Instagram), `short` (YouTube). Single channel per call; loop for multi-channel. |
-| `create_draft` | Save a draft without scheduling. Accepts the same `post_type` placement as `schedule_post`. |
-| `update_post` | Edit an existing post — caption, schedule, attachments, placement (`post_type`), category. The current placement is preserved unless you change it. |
-| `reschedule_post` | Lighter alternative to `update_post` when you only need to change the time. |
-| `publish_post_now` | Immediately publish a draft or scheduled post, bypassing the schedule. |
-| `cancel_post` | Cancel a scheduled post or delete a draft. |
-
-### Media
-
-| Tool | Purpose |
-|---|---|
-| `list_media` | Browse a media-library collection. |
-| `list_media_collections` | The collections (folders) in a social set — source of the `collection_id` that `list_media` requires. |
-| `upload_media` | Pull a remote URL into the media library and return an `attachment_id` usable in `schedule_post`. |
-
-### Analytics
-
-| Tool | Purpose |
-|---|---|
-| `get_post_analytics` | Metrics for a single post (likes, comments, shares, reach, impressions, saves, views). |
-| `get_post_insights` | Per-post analytics for a channel, sortable by metric — perfect for "top 10 by reach". |
-| `get_channel_analytics` | High-level channel stats (currently post count). |
-| `trigger_analytics_sync` | Refresh metrics from the platform's API on demand. |
-| `export_analytics_csv` | Base64 CSV export of per-post analytics for any channel + date range. |
-
-### AI generation
-
-| Tool | Purpose |
-|---|---|
-| `generate_caption` | Generate or transform a caption (write-new, rephrase, shorten, expand, casualize, formalize). |
-| `generate_hashtags` | Generate a relevant hashtag set for a topic or caption. |
-| `generate_image` | Start generating an image and saving it to the media library. Returns a job id in about a second; generation takes about a minute. HD requires Business+. |
-| `get_image_job` | Poll a `generate_image` job until it succeeds (carries the attachment id) or fails. |
-
-### Bio links
-
-| Tool | Purpose |
-|---|---|
-| `list_biolinks` | List the link-in-bio pages you own. |
-| `list_biolink_subscribers` | Paginated email/phone subscribers for a bio-link page — feeds outbound automations. |
-
-### Utilities
-
-| Tool | Purpose |
-|---|---|
-| `get_url_preview` | Open Graph fetch (title, description, image) for a URL — useful when composing link cards. |
-
-### Workspace management
-
-| Tool | Purpose |
-|---|---|
-| `update_social_set_timezone` | Change a social set's default timezone. |
-| `disconnect_channel` | **Destructive.** Permanently disconnect a channel. Requires `confirm=true`. |
-
----
+A tool added to the registry reaches MCP clients without a change to this server; clients pick it up when they next refresh their tool list.
 
 ## OAuth scopes reference
 
@@ -265,11 +192,8 @@ src/
     viraly-client.ts     Platform API client (typed)
     errors.ts            error taxonomy
   tools/
-    registry.ts          register/dispatch framework
-    types.ts             ToolDefinition interface
-    index.ts             aggregated tool imports
-    read/                read-only tools
-    write/               state-changing tools (also AI generation)
+    registry.ts          the generated adapter: tools/list and tools/call from the API registry
+    idempotency.ts       stable idempotency key per call
   transport/
     http.ts              Streamable HTTP transport
     stdio.ts             stdio transport

@@ -31,7 +31,6 @@ import { loadConfig } from './config.js';
 import { createLogger } from './observability/logger.js';
 import { createHttpApp } from './transport/http.js';
 // Side-effect import: pulls every tool module, which calls registerTool().
-import './tools/index.js';
 
 const config = loadConfig();
 setConfig(config);
