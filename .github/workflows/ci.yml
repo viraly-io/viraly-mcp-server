@@ -27,6 +27,9 @@ jobs:
       - name: Lint
         run: npm run lint
 
+      - name: README tool list is current
+        run: npm run readme:check
+
       - name: Typecheck
         run: npm run typecheck
 
