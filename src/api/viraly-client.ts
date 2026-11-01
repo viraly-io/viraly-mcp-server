@@ -35,7 +35,7 @@ export interface ViralyClientOptions {
  *
  * This is the tightest hop in the chain, so it is what a slow upstream actually
  * hits. It is NOT free to change on its own: it participates in the four-way
- * ordering documented in `tools/write/_idempotency-store.ts`, and every value
+ * ordering the old hand-written write tools relied on, and every value
  * there has to move with it.
  *
  * 30s was chosen when the slowest write was a few seconds. It stopped being

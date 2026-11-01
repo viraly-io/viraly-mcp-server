@@ -1,0 +1,970 @@
+[
+  {
+    "name": "add_block",
+    "module": "bio_links",
+    "risk": "ReversibleWrite",
+    "scope": "biolinks:write",
+    "description": "Adds a link button or a social icon to a bio page. Other sections (media, products, tipping, forms) are added in the editor.",
+    "undoable": true
+  },
+  {
+    "name": "add_post_comment",
+    "module": "approvals",
+    "risk": "ReversibleWrite",
+    "scope": "posts:write",
+    "description": "Adds an internal team comment to a post, as in the post's comment thread. The network never sees it.",
+    "undoable": true
+  },
+  {
+    "name": "assign_category",
+    "module": "categories",
+    "risk": "ReversibleWrite",
+    "scope": "categories:write",
+    "description": "Adds categories to posts of the active social set, or removes them.",
+    "undoable": true
+  },
+  {
+    "name": "bulk_reschedule",
+    "module": "posts",
+    "risk": "ReversibleWrite",
+    "scope": "posts:write",
+    "description": "Moves several drafts or scheduled posts to new times under one confirmation. Each item succeeds or fails on its own and the result says which; drafts stay drafts.",
+    "undoable": true
+  },
+  {
+    "name": "cancel_post",
+    "module": "posts",
+    "risk": "ReversibleWrite",
+    "scope": "posts:write",
+    "description": "Stops a scheduled post from publishing by turning it back into a draft. Nothing is deleted.",
+    "undoable": true
+  },
+  {
+    "name": "compare_periods",
+    "module": "analytics",
+    "risk": "Read",
+    "scope": "analytics:read",
+    "description": "Compares two date ranges of published posts in the active social set, or one channel: posts, engagement, reach, views and the change in percent. Use it for \"this month against last month\".",
+    "undoable": false
+  },
+  {
+    "name": "create_bio_page",
+    "module": "bio_links",
+    "risk": "ReversibleWrite",
+    "scope": "biolinks:write",
+    "description": "Creates a link-in-bio page in the active social set with a profile name and bio; links are added with add_block. The page is public at its URL once created.",
+    "undoable": true
+  },
+  {
+    "name": "create_category",
+    "module": "categories",
+    "risk": "ReversibleWrite",
+    "scope": "categories:write",
+    "description": "Creates a post category for the workspace.",
+    "undoable": true
+  },
+  {
+    "name": "create_collection",
+    "module": "media",
+    "risk": "ReversibleWrite",
+    "scope": "media:write",
+    "description": "Creates a media library collection (folder) in the active social set.",
+    "undoable": true
+  },
+  {
+    "name": "create_comment_rule",
+    "module": "inbox",
+    "risk": "AlwaysAsk",
+    "scope": "comment_rules:write",
+    "description": "Creates a comment rule on a post of the active social set: when a new comment matches the conditions, the inbox replies publicly, sends a DM to the commenter, or hides the comment, with fixed texts or an optional model step. Replies go out without anyone pressing a button, so the member confirms every time. Needs the Influencer plan or higher and a channel whose inbox can reply.",
+    "undoable": false
+  },
+  {
+    "name": "create_draft",
+    "module": "posts",
+    "risk": "ReversibleWrite",
+    "scope": "posts:write",
+    "description": "Saves a draft on one channel of the active social set. A draft publishes nothing; it waits in the app until someone schedules it. Needs the member's confirmation unless they allowed drafts.",
+    "undoable": true
+  },
+  {
+    "name": "create_draft_from_feed_item",
+    "module": "feeds",
+    "risk": "ReversibleWrite",
+    "scope": "posts:write",
+    "description": "Drafts a post sharing a feed item on a channel, with its link, and marks the item used.",
+    "undoable": true
+  },
+  {
+    "name": "create_draft_from_idea",
+    "module": "ideas",
+    "risk": "ReversibleWrite",
+    "scope": "posts:write",
+    "description": "Turns an idea into a draft on a channel: its caption (or title) and media, with the link appended. The idea is marked Scheduled as in the app.",
+    "undoable": true
+  },
+  {
+    "name": "create_evergreen_schedule",
+    "module": "evergreen",
+    "risk": "ReversibleWrite",
+    "scope": "posts:write",
+    "description": "Makes a post evergreen: Viraly schedules a copy of it every so many days, until a count or a date.",
+    "undoable": true
+  },
+  {
+    "name": "create_hashtag_list",
+    "module": "hashtags",
+    "risk": "ReversibleWrite",
+    "scope": "hashtags:write",
+    "description": "Saves a hashtag list in the active social set for the composer.",
+    "undoable": true
+  },
+  {
+    "name": "create_idea",
+    "module": "ideas",
+    "risk": "ReversibleWrite",
+    "scope": "ideas:write",
+    "description": "Saves an idea on a board of the active social set.",
+    "undoable": true
+  },
+  {
+    "name": "create_short_link",
+    "module": "short_links",
+    "risk": "ReversibleWrite",
+    "scope": "url_shortener:write",
+    "description": "Shortens a URL with the workspace's default shortener; the result says if it fell back to Viraly's own.",
+    "undoable": true
+  },
+  {
+    "name": "create_social_set",
+    "module": "social_sets",
+    "risk": "ReversibleWrite",
+    "scope": "social_sets:write",
+    "description": "Creates a new, empty social set (a brand or client with its own channels, calendar and timezone). Channels are connected to it in the app afterwards.",
+    "undoable": true
+  },
+  {
+    "name": "delete_bio_page",
+    "module": "bio_links",
+    "risk": "AlwaysAsk",
+    "scope": "biolinks:write",
+    "description": "Deletes a bio page with its custom domain; its URL stops working. The member confirms every time.",
+    "undoable": false
+  },
+  {
+    "name": "delete_category",
+    "module": "categories",
+    "risk": "AlwaysAsk",
+    "scope": "categories:write",
+    "description": "Deletes a post category; posts that had it lose it. The member confirms every time.",
+    "undoable": false
+  },
+  {
+    "name": "delete_draft",
+    "module": "posts",
+    "risk": "ReversibleWrite",
+    "scope": "posts:write",
+    "description": "Deletes a draft. Undo brings it back as a new draft with the same text, media and time.",
+    "undoable": true
+  },
+  {
+    "name": "delete_hashtag_list",
+    "module": "hashtags",
+    "risk": "AlwaysAsk",
+    "scope": "hashtags:write",
+    "description": "Deletes a saved hashtag list. The member confirms every time.",
+    "undoable": false
+  },
+  {
+    "name": "delete_idea",
+    "module": "ideas",
+    "risk": "ReversibleWrite",
+    "scope": "ideas:write",
+    "description": "Deletes an idea. Undo saves it again on its board with the same text.",
+    "undoable": true
+  },
+  {
+    "name": "delete_media",
+    "module": "media",
+    "risk": "AlwaysAsk",
+    "scope": "media:write",
+    "description": "Removes a file from the media library. Posts that already carry it keep it. The member confirms every time.",
+    "undoable": false
+  },
+  {
+    "name": "delete_scheduled_post",
+    "module": "posts",
+    "risk": "AlwaysAsk",
+    "scope": "posts:write",
+    "description": "Deletes a scheduled, pending-approval or failed post from Viraly. Irreversible; the member confirms every time. For drafts use delete_draft; to keep a post but stop it, use cancel_post.",
+    "undoable": false
+  },
+  {
+    "name": "delete_short_link",
+    "module": "short_links",
+    "risk": "AlwaysAsk",
+    "scope": "url_shortener:write",
+    "description": "Deletes a short link. Anyone who opens it afterwards gets nothing, including in posts already published. The member confirms every time.",
+    "undoable": false
+  },
+  {
+    "name": "delete_social_set",
+    "module": "social_sets",
+    "risk": "AlwaysAsk",
+    "scope": "social_sets:write",
+    "description": "Deletes a social set with all its channels, posts and inbox history. Irreversible; the member confirms on a card every time.",
+    "undoable": false
+  },
+  {
+    "name": "disconnect_channel",
+    "module": "channels",
+    "risk": "AlwaysAsk",
+    "scope": "channels:write",
+    "description": "Disconnects a channel from Viraly: its scheduled posts and inbox history are removed. Irreversible; the member confirms on a card every time.",
+    "undoable": false
+  },
+  {
+    "name": "duplicate_post",
+    "module": "posts",
+    "risk": "ReversibleWrite",
+    "scope": "posts:write",
+    "description": "Copies a post's text and media into a new draft, on the same channel or another. Works for published and failed posts too.",
+    "undoable": true
+  },
+  {
+    "name": "export_analytics_csv",
+    "module": "analytics",
+    "risk": "Read",
+    "scope": "analytics:read",
+    "description": "Post metrics of a date range as CSV text, one row per published post, up to 100 rows. Hand it to download_file for a file.",
+    "undoable": false
+  },
+  {
+    "name": "export_posts",
+    "module": "posts",
+    "risk": "Read",
+    "scope": "posts:read",
+    "description": "The posts of a date range as CSV text (date, channel, status, title, link), up to 100 rows. Hand the text to download_file to give the member a file.",
+    "undoable": false
+  },
+  {
+    "name": "export_subscribers",
+    "module": "bio_links",
+    "risk": "Read",
+    "scope": "subscribers:read",
+    "description": "A bio page's subscribers as CSV text (name, email, phone, date), up to 100 rows. Hand it to download_file for a file.",
+    "undoable": false
+  },
+  {
+    "name": "find_free_slots",
+    "module": "posts",
+    "risk": "Read",
+    "scope": "posts:read",
+    "description": "The empty posting slots of the active social set's channels in a date range, earliest first: each with channel and local time. A slot is empty when no scheduled post sits in it. Use it for \"fill the empty slots next week\".",
+    "undoable": false
+  },
+  {
+    "name": "generate_alt_text",
+    "module": "ai",
+    "risk": "Read",
+    "scope": "media:read",
+    "description": "Looks at an image in the media library and drafts alt text for it. Returns text; update_alt_text saves it.",
+    "undoable": false
+  },
+  {
+    "name": "generate_caption",
+    "module": "ai",
+    "risk": "Read",
+    "scope": "posts:read",
+    "description": "Writes or reworks a caption with the composer's AI assistant: new from a topic, or rephrased, shortened, expanded, more casual or more formal. Returns text only; nothing is saved.",
+    "undoable": false
+  },
+  {
+    "name": "generate_hashtags",
+    "module": "hashtags",
+    "risk": "Read",
+    "scope": "hashtags:read",
+    "description": "Suggests hashtags for a post with the composer's hashtag generator. Returns text only.",
+    "undoable": false
+  },
+  {
+    "name": "generate_ideas",
+    "module": "ideas",
+    "risk": "Read",
+    "scope": "ideas:read",
+    "description": "Suggests post ideas for a business and audience with the app's idea generator. Returns text; create_idea saves the ones the member likes.",
+    "undoable": false
+  },
+  {
+    "name": "generate_image",
+    "module": "ai",
+    "risk": "ReversibleWrite",
+    "scope": "media:write",
+    "description": "Generates an image with the app's image model and saves it to the media library. It counts against the plan's monthly image allowance, so the member confirms it.",
+    "undoable": true
+  },
+  {
+    "name": "generate_link_title",
+    "module": "ai",
+    "risk": "Read",
+    "scope": "posts:read",
+    "description": "Writes a short headline for a link preview or a bio link button.",
+    "undoable": false
+  },
+  {
+    "name": "generate_variations",
+    "module": "ai",
+    "risk": "Read",
+    "scope": "posts:read",
+    "description": "Writes alternative versions of a caption, for A/B tests or for posting the same news on several days.",
+    "undoable": false
+  },
+  {
+    "name": "get_best_times",
+    "module": "analytics",
+    "risk": "Read",
+    "scope": "analytics:read",
+    "description": "When the active social set's published posts did best: average engagement by weekday and by local hour over a look-back window, with how many posts each figure rests on.",
+    "undoable": false
+  },
+  {
+    "name": "get_bio_analytics",
+    "module": "bio_links",
+    "risk": "Read",
+    "scope": "biolinks:read",
+    "description": "A bio page's traffic over a period: views, unique visitors, clicks, click-through rate, bounce rate, and its most clicked links.",
+    "undoable": false
+  },
+  {
+    "name": "get_bio_page",
+    "module": "bio_links",
+    "risk": "Read",
+    "scope": "biolinks:read",
+    "description": "One bio page: its profile title and bio, its sections, its links (with ids for update_block and remove_block) and its social links.",
+    "undoable": false
+  },
+  {
+    "name": "get_calendar",
+    "module": "posts",
+    "risk": "Read",
+    "scope": "posts:read",
+    "description": "The calendar of the active social set for a date range: every post per day with its local time, channel, status and caption start. Use it to see what is planned or where the gaps are.",
+    "undoable": false
+  },
+  {
+    "name": "get_category_analytics",
+    "module": "analytics",
+    "risk": "Read",
+    "scope": "analytics:read",
+    "description": "How each post category performed in the active social set over a date range: posts, reach, impressions, engagement and engagement rate per category, for comparing content pillars.",
+    "undoable": false
+  },
+  {
+    "name": "get_channel",
+    "module": "channels",
+    "risk": "Read",
+    "scope": "channels:read",
+    "description": "One channel in detail: platform, account type, status and why (an expired token, a locked channel over the plan's limit), when its token was last refreshed, its posting slots and how many posts it has.",
+    "undoable": false
+  },
+  {
+    "name": "get_channel_analytics",
+    "module": "analytics",
+    "risk": "Read",
+    "scope": "analytics:read",
+    "description": "A channel's performance in a date range: the posts published and their summed metrics on every platform, plus the account's own numbers (followers, reach, engagement) with the previous period of equal length on Facebook and Instagram.",
+    "undoable": false
+  },
+  {
+    "name": "get_comment_rule_activity",
+    "module": "inbox",
+    "risk": "Read",
+    "scope": "comment_rules:read",
+    "description": "What a comment rule, or a post's rules, did: totals by status and skip reason, and the recent replies, DMs and hides with the text we sent. Commenters' own text is not included.",
+    "undoable": false
+  },
+  {
+    "name": "get_custom_domain",
+    "module": "bio_links",
+    "risk": "Read",
+    "scope": "biolinks:read",
+    "description": "A bio page's custom domain and its DNS status, with the records the member still has to add at their domain registrar.",
+    "undoable": false
+  },
+  {
+    "name": "get_hashtag_list",
+    "module": "hashtags",
+    "risk": "Read",
+    "scope": "hashtags:read",
+    "description": "One saved hashtag list in full.",
+    "undoable": false
+  },
+  {
+    "name": "get_media",
+    "module": "media",
+    "risk": "Read",
+    "scope": "media:read",
+    "description": "One file of the media library: type, status, size, duration, alt text, tags and collection.",
+    "undoable": false
+  },
+  {
+    "name": "get_media_requirements",
+    "module": "channels",
+    "risk": "Read",
+    "scope": "channels:read",
+    "description": "Each platform's rules for media and text: formats, file sizes, aspect ratios, video lengths, how many files, caption length and hashtag limits. Check them before drafting; validate_post checks a concrete post.",
+    "undoable": false
+  },
+  {
+    "name": "get_post",
+    "module": "posts",
+    "risk": "Read",
+    "scope": "posts:read",
+    "description": "One post of the active social set: the full caption, channel, status, local scheduled time, public link, last error and summary metrics.",
+    "undoable": false
+  },
+  {
+    "name": "get_post_analytics",
+    "module": "analytics",
+    "risk": "Read",
+    "scope": "analytics:read",
+    "description": "What one post of the active social set did: reach, impressions, views, likes, comments, shares, saves, clicks and when the numbers were last updated.",
+    "undoable": false
+  },
+  {
+    "name": "get_post_diagnostics",
+    "module": "posts",
+    "risk": "Read",
+    "scope": "posts:read",
+    "description": "Why a post failed or is stuck: the network's error with its reason and hint, the channel's state, and what usually fixes it.",
+    "undoable": false
+  },
+  {
+    "name": "get_post_insights",
+    "module": "analytics",
+    "risk": "Read",
+    "scope": "analytics:read",
+    "description": "The published posts of one channel since a date with their metrics, newest first or ranked by engagement, reach or views.",
+    "undoable": false
+  },
+  {
+    "name": "get_post_preview",
+    "module": "posts",
+    "risk": "Read",
+    "scope": "posts:read",
+    "description": "How a post will appear: the full text with its length against the platform's limit, the media in order with type and size, the placement and the local time.",
+    "undoable": false
+  },
+  {
+    "name": "get_posting_slots",
+    "module": "channels",
+    "risk": "Read",
+    "scope": "channels:read",
+    "description": "The weekly posting slots of each channel (day and local time) that the queue fills. find_free_slots says which of them are empty on given dates.",
+    "undoable": false
+  },
+  {
+    "name": "get_reconnect_link",
+    "module": "channels",
+    "risk": "Read",
+    "scope": "channels:read",
+    "description": "Where the member reconnects an expired or broken channel. Reconnecting needs the member to sign in to the network themselves, so Copilot cannot do it; it can open the page with navigate.",
+    "undoable": false
+  },
+  {
+    "name": "get_short_link_stats",
+    "module": "short_links",
+    "risk": "Read",
+    "scope": "url_shortener:read",
+    "description": "Clicks on one short link: total, by day, by country, by device and the posts that carry it.",
+    "undoable": false
+  },
+  {
+    "name": "get_shortener_settings",
+    "module": "short_links",
+    "risk": "Read",
+    "scope": "url_shortener:read",
+    "description": "Which shortener the workspace uses by default (Viraly's own, Bitly, Dub or Rebrandly) and its default domain.",
+    "undoable": false
+  },
+  {
+    "name": "get_social_set",
+    "module": "social_sets",
+    "risk": "Read",
+    "scope": "social_sets:read",
+    "description": "The active social set in detail: name, short code, colour, timezone and each connected channel with its status.",
+    "undoable": false
+  },
+  {
+    "name": "get_url_preview",
+    "module": "short_links",
+    "risk": "Read",
+    "scope": "url_shortener:read",
+    "description": "What a link shows when shared: its page title, description, site and image.",
+    "undoable": false
+  },
+  {
+    "name": "get_workspace",
+    "module": "workspace",
+    "risk": "Read",
+    "scope": "workspace:read",
+    "description": "The workspace and the active social set: names, plan, timezone and how many channels are connected. Use it for questions about the account itself. For the workspace's settings (notifications, API keys, connected apps, webhooks, Slack, Teams, Discord) use get_workspace_settings and its neighbours in the settings module.",
+    "undoable": false
+  },
+  {
+    "name": "get_workspace_brief",
+    "module": "workspace",
+    "risk": "Read",
+    "scope": "workspace:read",
+    "description": "The brief the members wrote for Copilot: brand voice, audience, do and don't lists, posting rules. The social set's own brief when it has one, otherwise the workspace's.",
+    "undoable": false
+  },
+  {
+    "name": "import_media",
+    "module": "media",
+    "risk": "ReversibleWrite",
+    "scope": "media:write",
+    "description": "Imports a file from Dropbox or Unsplash into the active social set's media library. It runs in the background; the result gives the job's state.",
+    "undoable": false
+  },
+  {
+    "name": "list_bio_integrations",
+    "module": "bio_links",
+    "risk": "Read",
+    "scope": "biolinks:read",
+    "description": "The email-list integrations (for example AWeber, HubSpot, Kit) the active social set's bio pages can send new subscribers to.",
+    "undoable": false
+  },
+  {
+    "name": "list_bio_pages",
+    "module": "bio_links",
+    "risk": "Read",
+    "scope": "biolinks:read",
+    "description": "The link-in-bio pages of the active social set: id, title, URL slug and custom domain.",
+    "undoable": false
+  },
+  {
+    "name": "list_categories",
+    "module": "categories",
+    "risk": "Read",
+    "scope": "categories:read",
+    "description": "The workspace's post categories (content pillars such as Promotions or Tips) with id, colour and how many posts use each.",
+    "undoable": false
+  },
+  {
+    "name": "list_channels",
+    "module": "channels",
+    "risk": "Read",
+    "scope": "channels:read",
+    "description": "The connected accounts and pages of the active social set: id, name, username, platform and status (Active, Expired, Disabled, Locked). Use it to turn a channel name into its id.",
+    "undoable": false
+  },
+  {
+    "name": "list_comment_rules",
+    "module": "inbox",
+    "risk": "Read",
+    "scope": "comment_rules:read",
+    "description": "The comment rules of the active social set, or of one post: id, post, what triggers them, what they do, status and what they did in the last 30 days.",
+    "undoable": false
+  },
+  {
+    "name": "list_evergreen_schedules",
+    "module": "evergreen",
+    "risk": "Read",
+    "scope": "posts:read",
+    "description": "The evergreen schedules of the active social set: which post recycles, how often, how many times so far and whether it is paused.",
+    "undoable": false
+  },
+  {
+    "name": "list_feed_items",
+    "module": "feeds",
+    "risk": "Read",
+    "scope": "feeds:read",
+    "description": "The newest items of a feed: title, link, summary and whether they were used.",
+    "undoable": false
+  },
+  {
+    "name": "list_feeds",
+    "module": "feeds",
+    "risk": "Read",
+    "scope": "feeds:read",
+    "description": "The RSS and Atom feeds the active social set follows, with unread item counts and fetch errors.",
+    "undoable": false
+  },
+  {
+    "name": "list_hashtag_lists",
+    "module": "hashtags",
+    "risk": "Read",
+    "scope": "hashtags:read",
+    "description": "The saved hashtag lists of the active social set: id, topic and the hashtags.",
+    "undoable": false
+  },
+  {
+    "name": "list_idea_boards",
+    "module": "ideas",
+    "risk": "Read",
+    "scope": "ideas:read",
+    "description": "The idea boards of the active social set with how many ideas each holds.",
+    "undoable": false
+  },
+  {
+    "name": "list_ideas",
+    "module": "ideas",
+    "risk": "Read",
+    "scope": "ideas:read",
+    "description": "The ideas on one board: title, caption, notes, link, planned date and status.",
+    "undoable": false
+  },
+  {
+    "name": "list_media",
+    "module": "media",
+    "risk": "Read",
+    "scope": "media:read",
+    "description": "Files in one media library collection of the active social set, 25 per page, newest first: id, type, size, alt text and tags. Use the ids as mediaIds in posts.",
+    "undoable": false
+  },
+  {
+    "name": "list_media_collections",
+    "module": "media",
+    "risk": "Read",
+    "scope": "media:read",
+    "description": "The media library's collections (folders) in the active social set, with how many files each holds.",
+    "undoable": false
+  },
+  {
+    "name": "list_pending_approvals",
+    "module": "approvals",
+    "risk": "Read",
+    "scope": "posts:read",
+    "description": "Posts of the active social set in the approval workflow: by default the ones waiting for this member to approve, with channel, local time and caption start.",
+    "undoable": false
+  },
+  {
+    "name": "list_pinterest_boards",
+    "module": "channels",
+    "risk": "Read",
+    "scope": "channels:read",
+    "description": "The boards of a Pinterest channel, with their ids. A pin needs a board.",
+    "undoable": false
+  },
+  {
+    "name": "list_post_comments",
+    "module": "approvals",
+    "risk": "Read",
+    "scope": "posts:read",
+    "description": "The team's internal comments on a post (not comments from the network), oldest first, with who wrote them.",
+    "undoable": false
+  },
+  {
+    "name": "list_posts",
+    "module": "posts",
+    "risk": "Read",
+    "scope": "posts:read",
+    "description": "Posts of the active social set, 25 per page, latest scheduled first: id, a short caption, channel, status, local scheduled time and summary metrics. For one post in full use get_post; for the best performers use list_top_posts; for posts waiting for the member's approval use list_pending_approvals (approvals module), which knows who approves what.",
+    "undoable": false
+  },
+  {
+    "name": "list_recycled_content",
+    "module": "evergreen",
+    "risk": "Read",
+    "scope": "posts:read",
+    "description": "The copies an evergreen post has produced so far: each copy's time and status.",
+    "undoable": false
+  },
+  {
+    "name": "list_short_links",
+    "module": "short_links",
+    "risk": "Read",
+    "scope": "url_shortener:read",
+    "description": "The workspace's short links, 25 per page, newest first: short URL, original URL, clicks and the shortener that made it.",
+    "undoable": false
+  },
+  {
+    "name": "list_social_sets",
+    "module": "workspace",
+    "risk": "Read",
+    "scope": "social_sets:read",
+    "description": "The social sets this member can open, with name, short code and timezone, and which one is active. Tools work on the active set; to act on another one the member named, pass its id as socialSetId.",
+    "undoable": false
+  },
+  {
+    "name": "list_subscribers",
+    "module": "bio_links",
+    "risk": "Read",
+    "scope": "subscribers:read",
+    "description": "People who signed up on a bio page's email form, newest first: name, email and date; at most 25, with the total.",
+    "undoable": false
+  },
+  {
+    "name": "list_timezones",
+    "module": "workspace",
+    "risk": "Read",
+    "scope": "workspace:read",
+    "description": "Timezone ids the app accepts, for setting a social set's timezone. Filter with search; at most 50 come back.",
+    "undoable": false
+  },
+  {
+    "name": "list_top_posts",
+    "module": "analytics",
+    "risk": "Read",
+    "scope": "analytics:read",
+    "description": "The best performing published posts of the active social set in a date range, across its channels, with summary metrics. Use it for questions like \"what was my best post this week\".",
+    "undoable": false
+  },
+  {
+    "name": "move_media",
+    "module": "media",
+    "risk": "ReversibleWrite",
+    "scope": "media:write",
+    "description": "Moves files to another collection of the same social set.",
+    "undoable": true
+  },
+  {
+    "name": "move_to_queue",
+    "module": "posts",
+    "risk": "ReversibleWrite",
+    "scope": "posts:write",
+    "description": "Puts a draft or scheduled post into its channel's next empty posting slot; it then publishes by itself at that time.",
+    "undoable": true
+  },
+  {
+    "name": "pause_comment_rule",
+    "module": "inbox",
+    "risk": "ReversibleWrite",
+    "scope": "comment_rules:write",
+    "description": "Pauses a comment rule, or every rule of a post, so no more replies go out; or resumes them. Undo puts the rules back as they were.",
+    "undoable": true
+  },
+  {
+    "name": "pause_evergreen_schedule",
+    "module": "evergreen",
+    "risk": "ReversibleWrite",
+    "scope": "posts:write",
+    "description": "Pauses an evergreen schedule so no new copies are made, or resumes it.",
+    "undoable": true
+  },
+  {
+    "name": "publish_now",
+    "module": "posts",
+    "risk": "AlwaysAsk",
+    "scope": "posts:write",
+    "description": "Publishes a draft or scheduled post to the network right now. Irreversible: once on the network Viraly cannot take it back. The member confirms on a card every time.",
+    "undoable": false
+  },
+  {
+    "name": "remove_block",
+    "module": "bio_links",
+    "risk": "ReversibleWrite",
+    "scope": "biolinks:write",
+    "description": "Removes a link button or a social icon from a bio page.",
+    "undoable": true
+  },
+  {
+    "name": "request_approval",
+    "module": "approvals",
+    "risk": "ReversibleWrite",
+    "scope": "posts:write",
+    "description": "Sends a post for approval: it waits as Pending approval and does not publish until approved. The approvers are notified as in the app.",
+    "undoable": false
+  },
+  {
+    "name": "request_custom_domain",
+    "module": "bio_links",
+    "risk": "ReversibleWrite",
+    "scope": "biolinks:write",
+    "description": "Starts serving a bio page on the member's own domain. It returns the DNS records the member must add at their registrar; the domain works once they are in place.",
+    "undoable": true
+  },
+  {
+    "name": "request_media_render",
+    "module": "media",
+    "risk": "ReversibleWrite",
+    "scope": "media:write",
+    "description": "Makes an edited copy of a library file on the server: a centred crop to an aspect ratio, a video trim, or both. The original stays; the copy appears in the library when the render finishes.",
+    "undoable": true
+  },
+  {
+    "name": "reschedule_post",
+    "module": "posts",
+    "risk": "ReversibleWrite",
+    "scope": "posts:write",
+    "description": "Moves a draft, scheduled or pending-approval post of the active social set to a new time. A draft keeps its status: it gets the time but stays a draft and does not publish until someone schedules it. Needs the member's confirmation unless they allowed rescheduling.",
+    "undoable": true
+  },
+  {
+    "name": "retry_failed_post",
+    "module": "posts",
+    "risk": "AlwaysAsk",
+    "scope": "posts:write",
+    "description": "Tries a failed post again right now. Read get_post (its error) or get_post_diagnostics first: retrying an expired channel or a rejected file fails again.",
+    "undoable": false
+  },
+  {
+    "name": "rewrite_for_channel",
+    "module": "ai",
+    "risk": "Read",
+    "scope": "posts:read",
+    "description": "Rewrites a caption for another platform's length and style, for example a LinkedIn post into a Bluesky one under 300 characters.",
+    "undoable": false
+  },
+  {
+    "name": "schedule_post",
+    "module": "posts",
+    "risk": "ReversibleWrite",
+    "scope": "posts:write",
+    "description": "Schedules a post to publish by itself at a time, or in the channel's next queue slot: a new post, or an existing draft. It publishes without anyone pressing a button, so check it with validate_post first.",
+    "undoable": true
+  },
+  {
+    "name": "search_media",
+    "module": "media",
+    "risk": "Read",
+    "scope": "media:read",
+    "description": "Searches every collection of the active social set's media library by file name, alt text or tag; at most 25 results.",
+    "undoable": false
+  },
+  {
+    "name": "search_posts",
+    "module": "posts",
+    "risk": "Read",
+    "scope": "posts:read",
+    "description": "Finds posts of the active social set by words in their text, newest first, among its latest 2,000 posts. Use it to find \"the post about the autumn guide\".",
+    "undoable": false
+  },
+  {
+    "name": "set_default_shortener",
+    "module": "short_links",
+    "risk": "ReversibleWrite",
+    "scope": "url_shortener:write",
+    "description": "Chooses which shortener the workspace uses by default.",
+    "undoable": true
+  },
+  {
+    "name": "set_posting_slots",
+    "module": "channels",
+    "risk": "ReversibleWrite",
+    "scope": "channels:write",
+    "description": "Replaces one channel's weekly posting slots. Queued posts move to the new slots as the app does when slots are edited.",
+    "undoable": true
+  },
+  {
+    "name": "subscribe_feed",
+    "module": "feeds",
+    "risk": "ReversibleWrite",
+    "scope": "feeds:write",
+    "description": "Follows an RSS or Atom feed in the active social set so its items appear in Feeds.",
+    "undoable": true
+  },
+  {
+    "name": "trigger_analytics_sync",
+    "module": "analytics",
+    "risk": "ReversibleWrite",
+    "scope": "analytics:read",
+    "description": "Asks the network for a channel's latest numbers now instead of waiting for the next scheduled fetch. It runs in the background for a few minutes.",
+    "undoable": false
+  },
+  {
+    "name": "unsubscribe_feed",
+    "module": "feeds",
+    "risk": "ReversibleWrite",
+    "scope": "feeds:write",
+    "description": "Stops following a feed and removes its items. Undo follows it again; read states start over.",
+    "undoable": true
+  },
+  {
+    "name": "update_alt_text",
+    "module": "media",
+    "risk": "ReversibleWrite",
+    "scope": "media:write",
+    "description": "Sets a library file's alt text, which posts carry to the networks that support it. generate_alt_text drafts one.",
+    "undoable": true
+  },
+  {
+    "name": "update_bio_page",
+    "module": "bio_links",
+    "risk": "ReversibleWrite",
+    "scope": "biolinks:write",
+    "description": "Changes a bio page's profile name, bio or URL slug. Design and other sections are edited in the app.",
+    "undoable": true
+  },
+  {
+    "name": "update_block",
+    "module": "bio_links",
+    "risk": "ReversibleWrite",
+    "scope": "biolinks:write",
+    "description": "Changes a link button's text or URL, or a social icon's URL, on a bio page.",
+    "undoable": true
+  },
+  {
+    "name": "update_category",
+    "module": "categories",
+    "risk": "ReversibleWrite",
+    "scope": "categories:write",
+    "description": "Renames or recolours a post category.",
+    "undoable": true
+  },
+  {
+    "name": "update_evergreen_schedule",
+    "module": "evergreen",
+    "risk": "ReversibleWrite",
+    "scope": "posts:write",
+    "description": "Changes how often an evergreen post recycles and when it stops.",
+    "undoable": true
+  },
+  {
+    "name": "update_hashtag_list",
+    "module": "hashtags",
+    "risk": "ReversibleWrite",
+    "scope": "hashtags:write",
+    "description": "Changes a saved hashtag list's topic or hashtags.",
+    "undoable": true
+  },
+  {
+    "name": "update_idea",
+    "module": "ideas",
+    "risk": "ReversibleWrite",
+    "scope": "ideas:write",
+    "description": "Changes an idea's title, caption, notes, status or date.",
+    "undoable": true
+  },
+  {
+    "name": "update_post",
+    "module": "posts",
+    "risk": "ReversibleWrite",
+    "scope": "posts:write",
+    "description": "Changes the text, media or placement of a draft or scheduled post. It keeps its status and time; use reschedule_post for the time.",
+    "undoable": true
+  },
+  {
+    "name": "update_social_set",
+    "module": "social_sets",
+    "risk": "ReversibleWrite",
+    "scope": "social_sets:write",
+    "description": "Renames the active social set or changes its timezone.",
+    "undoable": true
+  },
+  {
+    "name": "update_workspace_brief",
+    "module": "workspace",
+    "risk": "ReversibleWrite",
+    "scope": "social_sets:write",
+    "description": "Replaces the brief Copilot reads on every request (brand voice, audience, rules), for the whole workspace or this social set only. Show the member the new text; it replaces the old one.",
+    "undoable": true
+  },
+  {
+    "name": "upload_media_from_url",
+    "module": "media",
+    "risk": "ReversibleWrite",
+    "scope": "media:write",
+    "description": "Adds a file to the active social set's media library from a public link. The server downloads and measures it; the result says when it is ready to post.",
+    "undoable": true
+  },
+  {
+    "name": "validate_post",
+    "module": "posts",
+    "risk": "Read",
+    "scope": "posts:read",
+    "description": "Checks a post before it is saved or scheduled, with the same rules the app enforces: caption length, media formats, sizes, counts and aspect ratios per platform, plus a channel that cannot publish, a time in the past and the same text already on the channel. Returns each problem; saves nothing.",
+    "undoable": false
+  }
+]

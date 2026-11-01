@@ -31,6 +31,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
+    "readme": "node scripts/generate-readme.mjs",
+    "readme:check": "node scripts/generate-readme.mjs --check",
     "build:lambda": "esbuild src/lambda.ts --bundle --platform=node --format=esm --target=node22 --outfile=dist-lambda/index.mjs --banner:js=\"import{createRequire as __cr}from'module';const require=__cr(import.meta.url);\""
   },
   "dependencies": {
@@ -43,7 +45,7 @@
     "prom-client": "^15.1.3",
     "serverless-http": "^4.0.0",
     "undici": "^7.1.1",
-    "zod": "^3.24.1"
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@types/cors": "^2.8.17",

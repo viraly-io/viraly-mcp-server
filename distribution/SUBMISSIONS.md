@@ -14,7 +14,7 @@ production deployment to be live first (Phase 5 CTO handoff).
 - **Supports DCR:** yes (RFC 7591 at `https://api.viraly.io/api/oauth/register`)
 - **Logo:** `assets/viraly-mcp-logo.png` — 540×540 PNG, transparent background (Viraly hummingbird)
 - **Short description:** "Schedule social posts, generate captions, and check analytics across 11+ platforms — directly from Claude."
-- **Tool count:** 36 (21 read, 15 write)
+- **Tool count:** 121 (the count comes from `tools-catalog.json`; run `npm run readme` after updating it)
 - **Privacy policy:** https://viraly.io/privacy-policy
 - **Terms of service:** https://viraly.io/terms-of-service
 - **Support email:** support@viraly.io
