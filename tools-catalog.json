@@ -148,7 +148,7 @@
     "module": "bio_links",
     "risk": "AlwaysAsk",
     "scope": "biolinks:write",
-    "description": "Deletes a bio page with its custom domain; its URL stops working. Its subscribers, its analytics history and its auto-add channel settings are deleted with it, as in the app (the result counts them); export_subscribers first to keep the list. There is no undo. In Copilot the member confirms every time; over MCP no card is shown, so confirm with the person first.",
+    "description": "Deletes a bio page with its custom domain; its URL stops working. Its subscribers, its analytics history and its auto-add channel settings are deleted with it, as in the app (the result counts them); export_subscribers first to keep the list (Influencer plan or above). There is no undo. In Copilot the member confirms every time; over MCP no card is shown, so confirm with the person first.",
     "undoable": false
   },
   {
@@ -260,7 +260,7 @@
     "module": "bio_links",
     "risk": "Read",
     "scope": "subscribers:read",
-    "description": "A bio page\u0027s subscribers as CSV text with the app\u0027s columns (Email, Name, Phone, Subscribed On, in UTC as yyyy-MM-dd HH:mm:ss), newest first, with the app\u0027s search and date filters; up to maxRows rows (default 1,000) across pages, truncated when more exist. Returns text, not a file. There is no plan check, as in the app (whose export takes the page of rows on screen).",
+    "description": "A bio page\u0027s subscribers as CSV text with the app\u0027s columns (Email, Name, Phone, Subscribed On, in UTC as yyyy-MM-dd HH:mm:ss), newest first, with the app\u0027s search and date filters; up to maxRows rows (default 1,000), truncated when more exist. Returns text, not a file. Needs the Influencer plan or above, as the app\u0027s CSV and Excel export.",
     "undoable": false
   },
   {
@@ -716,7 +716,7 @@
     "module": "bio_links",
     "risk": "Read",
     "scope": "subscribers:read",
-    "description": "People who signed up on a bio page\u0027s email form, newest first: id, name, email, phone and when; paged (page, pageSize), with the total and hasMore, and the app\u0027s search and date filters.",
+    "description": "People who signed up on a bio page\u0027s email form, newest first: id, name, email, phone and when; paged (page, pageSize), with the total and hasMore, and the app\u0027s search and date filters. Paging through the list is a subscriber export, so below the Influencer plan email and phone come back empty (null) and note says why; the app\u0027s Subscribers screen shows them a page at a time.",
     "undoable": false
   },
   {
@@ -964,7 +964,7 @@
     "module": "ideas",
     "risk": "ReversibleWrite",
     "scope": "ideas:write",
-    "description": "Changes an idea\u0027s title, caption, notes, link, status, planned date, board, media, tags or position; what is not given stays, and clear removes a caption, notes, link or date. Saving the idea from the app\u0027s modal keeps its notes and link; a move between boards in the app\u0027s board view clears its planned date, as the app sends none. The result lists the media added, removed and kept. In Copilot undo puts the idea back as it was, unless one of its earlier files has been removed from the library since. Over MCP there is no card and no undo.",
+    "description": "Changes an idea\u0027s title, caption, notes, link, status, planned date, board, media, tags or position; what is not given stays, and clear removes a caption, notes, link or date. Saving the idea from the app\u0027s modal keeps its notes and link. With boardId the idea moves, as the app\u0027s board view moves it: a move between boards changes only the board, so its date, text, media, tags, status and position stay unless given here too. The result lists the media added, removed and kept. In Copilot undo puts the idea back as it was, unless one of its earlier files has been removed from the library since. Over MCP there is no card and no undo.",
     "undoable": true
   },
   {
