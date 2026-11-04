@@ -4,15 +4,7 @@
     "module": "bio_links",
     "risk": "ReversibleWrite",
     "scope": "biolinks:write",
-    "description": "Adds a link button or a social icon to a bio page. Other sections (media, products, tipping, forms) are added in the editor.",
-    "undoable": true
-  },
-  {
-    "name": "add_post_comment",
-    "module": "approvals",
-    "risk": "ReversibleWrite",
-    "scope": "posts:write",
-    "description": "Adds an internal team comment to a post, as in the post's comment thread. The network never sees it.",
+    "description": "Adds an item to a bio page: a link button, a social icon, a featured video, a grid tile, a tip button, a product or an RSS feed, with the fields the editor has for it. Its section is added to the page after the existing ones when it is new. Plan rules, as in the editor: the Products, Tipping and RSS feed sections (and the email form and auto-add posts) need the Influencer plan or above, and each list holds at most a number of items per plan (Free: 5 links, 5 social icons, 1 featured video, 9 grid tiles, no products, tips or feeds; Influencer: 25, 15, 3, 24, 10 products, 5 tips, 2 feeds; Business: 50, 25, 10, 50, 30, 10, 5; Agency: 100, 50, 20, 100, 75, unlimited tips, 10; Enterprise: 200, 100, 50, 200, 150, unlimited tips, 20). A page over a limit from an earlier plan keeps its items; only adding past the limit is refused. Below Influencer, as the editor locks those sections, a product, tip or RSS feed already on the page can be removed but not changed. In Copilot it can be undone until the page is edited again, unless the plan no longer allows what the undo would put back; over MCP there is no undo. The email form, the auto-add posts section and the contact card are set with update_bio_page or in the editor; sections cannot be reordered here.",
     "undoable": true
   },
   {
@@ -20,7 +12,7 @@
     "module": "categories",
     "risk": "ReversibleWrite",
     "scope": "categories:write",
-    "description": "Adds categories to posts of the active social set, or removes them.",
+    "description": "Adds categories to posts of the active social set, or removes them, as the calendar\u0027s bulk category action does. A post that already has (or lacks) a category is left as it is. The result has postsUpdated (the posts sent), categoriesAffected (how many of the categories changed on at least one post), assignmentsChanged (post and category pairs added or removed) and changes (each post\u0027s changed categories). In Copilot undo reverses only those changes. Over MCP there is no card and no undo.",
     "undoable": true
   },
   {
@@ -28,7 +20,7 @@
     "module": "posts",
     "risk": "ReversibleWrite",
     "scope": "posts:write",
-    "description": "Moves several drafts or scheduled posts to new times under one confirmation. Each item succeeds or fails on its own and the result says which; drafts stay drafts.",
+    "description": "Moves up to 50 posts to new times in the future under one confirmation: drafts, scheduled and pending-approval posts, and processed posts (media ready, waiting for their time), which go back to scheduled. Each item succeeds or fails on its own and the result says which; drafts stay drafts. Undo moves each back while its old time has not passed; over MCP there is no card and no undo.",
     "undoable": true
   },
   {
@@ -36,7 +28,7 @@
     "module": "posts",
     "risk": "ReversibleWrite",
     "scope": "posts:write",
-    "description": "Stops a scheduled post from publishing by turning it back into a draft. Nothing is deleted.",
+    "description": "Stops a scheduled post from publishing by turning it back into a draft; it keeps its time, content and approval record, and nothing is deleted. A post waiting for approval goes back to draft as the app\u0027s Move to Draft does: its approval request is withdrawn, and that has no undo. Refused for a draft, a post being published, published or failed. Undo schedules it again while its time has not passed; over MCP there is no card and no undo.",
     "undoable": true
   },
   {
@@ -44,7 +36,7 @@
     "module": "analytics",
     "risk": "Read",
     "scope": "analytics:read",
-    "description": "Compares two date ranges of published posts in the active social set, or one channel: posts, engagement, reach, views and the change in percent. Use it for \"this month against last month\".",
+    "description": "Compares two date ranges of published posts in the active social set, one channel or one platform: posts, the totals of the app\u0027s universal metrics (engagement = likes \u002B comments \u002B shares \u002B clicks, the app\u0027s universal engagement (null for YouTube: not a YouTube figure), impressions, reach, likes, comments, shares, clicks, video views, engagement rate) and the change in percent from the first to the second. Only posts with collected metrics count, up to 10,000 per period (truncated says when the sums stopped short; the posts change counts every post). Totals follow the app\u0027s combined totals: YouTube\u0027s likes, comments, shares and views are left out of a total when another platform is in scope (YouTube\u0027s API policies forbid mixing them; they stay in byPlatform), and reach is never summed across platforms (the platform\u0027s own reach with one platform in scope, else null; byPlatform has it per platform). As the app\u0027s pages, which drop the engagement and engagement-rate figures whenever YouTube is in scope, engagement, engagementRate and averageEngagementPerPost are null when any YouTube post is in scope (byPlatform keeps each other platform\u0027s own); filter by platform or channel for them. A total that counts no post is null, not 0. platformsCovered and platformsLeftOut say which platforms a total adds up. Both periods add up the same platforms, so a change never compares YouTube figures with another platform\u0027s. There is no native endpoint for it; the sums are the tool\u0027s own over the app\u0027s definitions. Use it for \u0022this month against last month\u0022.",
     "undoable": false
   },
   {
@@ -52,7 +44,7 @@
     "module": "bio_links",
     "risk": "ReversibleWrite",
     "scope": "biolinks:write",
-    "description": "Creates a link-in-bio page in the active social set with a profile name and bio; links are added with add_block. The page is public at its URL once created.",
+    "description": "Creates a link-in-bio page in the active social set, as the app\u0027s editor would: profile name and bio, the design (a Design tab theme or its own colours, fonts and buttons; the app\u0027s default when omitted), profile picture, branding, and optionally the first links and social icons; more blocks with add_block. The page is public at its URL as soon as it exists. The plan\u0027s page limit and the editor\u0027s plan rules apply: a chosen slug needs Influencer, hiding the branding needs Business, and links and icons are capped per plan. In Copilot it can be undone (the page is deleted again) until a custom domain is attached; over MCP there is no undo.",
     "undoable": true
   },
   {
@@ -60,7 +52,7 @@
     "module": "categories",
     "risk": "ReversibleWrite",
     "scope": "categories:write",
-    "description": "Creates a post category for the workspace.",
+    "description": "Creates a post category for the workspace (every social set shares them), as the app\u0027s category settings do. In Copilot undo deletes it again while no post or idea uses it. Over MCP there is no card and no undo.",
     "undoable": true
   },
   {
@@ -68,7 +60,7 @@
     "module": "media",
     "risk": "ReversibleWrite",
     "scope": "media:write",
-    "description": "Creates a media library collection (folder) in the active social set.",
+    "description": "Creates a media library collection (folder) in the active social set, named up to 100 characters. It becomes the first collection, as in the app. In Copilot undo deletes it again while no file of any status is in it. Over MCP there is no card and no undo.",
     "undoable": true
   },
   {
@@ -76,7 +68,7 @@
     "module": "inbox",
     "risk": "AlwaysAsk",
     "scope": "comment_rules:write",
-    "description": "Creates a comment rule on a post of the active social set: when a new comment matches the conditions, the inbox replies publicly, sends a DM to the commenter, or hides the comment, with fixed texts or an optional model step. Replies go out without anyone pressing a button, so the member confirms every time. Needs the Influencer plan or higher and a channel whose inbox can reply.",
+    "description": "Creates a comment rule on a post of the active social set: when a new comment matches the conditions, the inbox replies publicly, sends a DM to the commenter, or hides the comment, with fixed texts or an optional model step; exclusions say which comments it leaves alone. Replies go out without anyone pressing a button: in Copilot the member confirms every time; over MCP no card is shown, so confirm with the person first. Needs the Influencer plan or higher and a platform whose inbox can reply (the post\u0027s channel must have its inbox switched on for comments to arrive).",
     "undoable": false
   },
   {
@@ -84,7 +76,7 @@
     "module": "posts",
     "risk": "ReversibleWrite",
     "scope": "posts:write",
-    "description": "Saves a draft on one channel of the active social set. A draft publishes nothing; it waits in the app until someone schedules it. Needs the member's confirmation unless they allowed drafts.",
+    "description": "Saves a draft on one channel of the active social set, with everything the composer takes: text, media, title, categories, platform settings (config), an approval request, evergreen. A draft publishes nothing; it waits in the app until someone schedules it. Without scheduledAtLocal it is planned for now, so it shows on today in the calendar. It counts against the plan\u0027s monthly post quota and is refused once the month is full. In Copilot the member confirms on a card unless they allowed drafts, and undo deletes it while it is still a draft; over MCP there is no card and no undo.",
     "undoable": true
   },
   {
@@ -92,7 +84,7 @@
     "module": "feeds",
     "risk": "ReversibleWrite",
     "scope": "posts:write",
-    "description": "Drafts a post sharing a feed item on a channel, with its link, and marks the item used.",
+    "description": "Drafts a post sharing a feed item on a channel, prefilled as the app\u0027s Create post does (title, summary and link), with what the composer then lets the member add: media (the item\u0027s image, library files or links), a Pinterest board, a title, categories and platform settings. The item\u0027s image is attached by default only where the platform needs media (Instagram, Pinterest, TikTok); on Facebook, X, LinkedIn, Threads, Bluesky, Mastodon and Google Business the default keeps the app\u0027s text and link card, and includeImage true attaches it. The draft is validated like any post and counts against the plan\u0027s monthly post quota, refused once the month is full. It marks the item used unless told not to. The result has the draft\u0027s caption, title, status, media count and categories. In Copilot undo deletes the draft while it is still one and puts the item back (an image imported for it stays in the library after undo). Over MCP there is no card and no undo.",
     "undoable": true
   },
   {
@@ -100,7 +92,7 @@
     "module": "ideas",
     "risk": "ReversibleWrite",
     "scope": "posts:write",
-    "description": "Turns an idea into a draft on a channel: its caption (or title) and media, with the link appended. The idea is marked Scheduled as in the app.",
+    "description": "Turns an idea into a draft on a channel: the idea\u0027s caption as the text (its title when the caption is empty), its title as the post title and the Pinterest, YouTube, TikTok or LinkedIn document title, its tags as the post\u0027s categories, and its media attached; title, categoryIds, mediaIds, mediaUrls, boardId and config replace what the idea gives. The app\u0027s idea card opens the composer with the caption and title only and leaves the idea as it is; this tool also copies the tags and media and marks the idea Scheduled. The draft is validated like any post and counts against the plan\u0027s monthly post quota, refused once the month is full. The result has the draft\u0027s caption, title, status, media count and categories. In Copilot undo deletes the draft while it is still one and puts the idea\u0027s status back. Over MCP there is no card and no undo.",
     "undoable": true
   },
   {
@@ -108,7 +100,7 @@
     "module": "evergreen",
     "risk": "ReversibleWrite",
     "scope": "posts:write",
-    "description": "Makes a post evergreen: Viraly schedules a copy of it every so many days, until a count or a date.",
+    "description": "Makes a post evergreen, as the composer\u0027s Recycle does: Viraly schedules copies of it every so many days from the post\u0027s own time (or at chosen times), until a count or an end date, rotating the caption variations. The copies are generated at once and publish by themselves; nothing extends the series later. The first copy must fall in the future: for a post published long ago, give customDatesLocal. For a draft, the copies still publish on their dates; the draft itself does not. Not for YouTube or TikTok posts (the app skips them) or for a recycled copy. A post that is already evergreen is changed with update_evergreen_schedule. pause_evergreen_schedule holds the copies and stop_evergreen_schedule ends the schedule (the app\u0027s Stop recycling). In Copilot undo removes the schedule and every copy not yet published; over MCP there is no card and no undo, so use stop_evergreen_schedule to take it back.",
     "undoable": true
   },
   {
@@ -116,7 +108,7 @@
     "module": "hashtags",
     "risk": "ReversibleWrite",
     "scope": "hashtags:write",
-    "description": "Saves a hashtag list in the active social set for the composer.",
+    "description": "Saves a hashtag list in the active social set for the composer\u0027s hashtag picker: a topic up to 512 characters and at most 30 tags, 1024 characters in all. Tags are stored as the app\u0027s tag field stores them (each with #, once, single-spaced); the result has the stored text. In Copilot undo deletes the list again. Over MCP there is no card and no undo.",
     "undoable": true
   },
   {
@@ -124,15 +116,23 @@
     "module": "ideas",
     "risk": "ReversibleWrite",
     "scope": "ideas:write",
-    "description": "Saves an idea on a board of the active social set.",
+    "description": "Saves an idea on a board of the active social set as a Draft, with its title, caption, notes, link, planned date, media (finished library files) and tags (categories), at the top of the board as the app does; the idea.created webhook fires. The app\u0027s idea modal edits the title, caption, date, board and media only. In Copilot undo deletes it again. Over MCP there is no card and no undo.",
     "undoable": true
+  },
+  {
+    "name": "create_pinterest_board",
+    "module": "channels",
+    "risk": "AlwaysAsk",
+    "scope": "posts:write",
+    "description": "Creates a board on a Pinterest channel\u0027s account, as the composer\u0027s board picker does when the member types a new name, and stores it with the channel\u0027s boards; the result\u0027s board is the row list_pinterest_boards returns, so its id goes straight to boardId on create_draft or schedule_post. The board is public on Pinterest (the picker makes public boards too; Viraly\u0027s Pinterest sign-in does not ask for secret boards), and Viraly cannot delete it again: that is done on Pinterest. A name the channel already has a board for (case aside) is refused with that board\u0027s id, so use it instead; a channel that is not Pinterest, not connected, or whose sign-in did not grant boards:write is refused. In Copilot the member confirms every time on a card naming the channel and the board; over MCP no card is shown, so confirm with the person first.",
+    "undoable": false
   },
   {
     "name": "create_short_link",
     "module": "short_links",
     "risk": "ReversibleWrite",
     "scope": "url_shortener:write",
-    "description": "Shortens a URL with the workspace's default shortener; the result says if it fell back to Viraly's own.",
+    "description": "Shortens a URL with the workspace\u0027s default shortener (or the one given) and returns the short URL to put in a caption. A link not used in a post is switched off 24 hours later: pass its id as shortenedUrlIds to create_draft, schedule_post or update_post, or give postId here. An existing active link for the same URL is returned instead of a new one (reused: true) and cannot be undone away. A new link counts against the plan\u0027s monthly short links (Free 50, Influencer 500, Business 5,000, Agency 25,000, Enterprise unlimited); a custom back-half needs Business or above. In Copilot a new link can be undone (it is deleted); over MCP there is no undo.",
     "undoable": true
   },
   {
@@ -140,7 +140,7 @@
     "module": "social_sets",
     "risk": "ReversibleWrite",
     "scope": "social_sets:write",
-    "description": "Creates a new, empty social set (a brand or client with its own channels, calendar and timezone). Channels are connected to it in the app afterwards.",
+    "description": "Creates a new, empty social set (a brand or client with its own channels, calendar and timezone), with the server\u0027s checks: a name up to 65 characters, a timezone id from list_timezones, a code of one or two characters (the app\u0027s form asks for exactly two). The default code and colour are the form\u0027s. Channels are connected to it in the app afterwards. In Copilot undo deletes it again while it has no channel and no media library file; over MCP there is no card and no undo.",
     "undoable": true
   },
   {
@@ -148,7 +148,7 @@
     "module": "bio_links",
     "risk": "AlwaysAsk",
     "scope": "biolinks:write",
-    "description": "Deletes a bio page with its custom domain; its URL stops working. The member confirms every time.",
+    "description": "Deletes a bio page with its custom domain; its URL stops working. Its subscribers, its analytics history and its auto-add channel settings are deleted with it, as in the app (the result counts them); export_subscribers first to keep the list (Influencer plan or above). There is no undo. In Copilot the member confirms every time; over MCP no card is shown, so confirm with the person first.",
     "undoable": false
   },
   {
@@ -156,7 +156,15 @@
     "module": "categories",
     "risk": "AlwaysAsk",
     "scope": "categories:write",
-    "description": "Deletes a post category; posts that had it lose it. The member confirms every time.",
+    "description": "Deletes a post category of the workspace; posts and ideas that had it lose it (they are not deleted). The result counts them. There is no undo. In Copilot the member confirms every time. Over MCP no card is shown, so confirm with the person first.",
+    "undoable": false
+  },
+  {
+    "name": "delete_comment_rule",
+    "module": "inbox",
+    "risk": "AlwaysAsk",
+    "scope": "comment_rules:write",
+    "description": "Deletes a comment rule of the active social set, as the comment rules endpoint\u0027s DELETE does: the rule acts on no new comment, and every row of its activity (what get_comment_rule_activity shows for it) is deleted with it; the card and the result count those rows. Replies it already sent stay on the network. Irreversible: in Copilot the member confirms every time; over MCP no card is shown, so confirm with the person first. To stop a rule for a while and keep its activity, use pause_comment_rule.",
     "undoable": false
   },
   {
@@ -164,7 +172,7 @@
     "module": "posts",
     "risk": "ReversibleWrite",
     "scope": "posts:write",
-    "description": "Deletes a draft. Undo brings it back as a new draft with the same text, media and time.",
+    "description": "Deletes a draft. Undo brings it back as a new draft (a new id) with the same text, title, media and alt text, categories, platform settings and time, and it does not count against the monthly post quota again; over MCP there is no card and no undo.",
     "undoable": true
   },
   {
@@ -172,7 +180,7 @@
     "module": "hashtags",
     "risk": "AlwaysAsk",
     "scope": "hashtags:write",
-    "description": "Deletes a saved hashtag list. The member confirms every time.",
+    "description": "Deletes a saved hashtag list of the active social set; posts that used its tags keep them. There is no undo. In Copilot the member confirms every time. Over MCP no card is shown, so confirm with the person first.",
     "undoable": false
   },
   {
@@ -180,7 +188,7 @@
     "module": "ideas",
     "risk": "ReversibleWrite",
     "scope": "ideas:write",
-    "description": "Deletes an idea. Undo saves it again on its board with the same text.",
+    "description": "Deletes an idea, as the app\u0027s delete does (no webhook). In Copilot undo saves it again on its board with its text, date, media, tags, status and position, under a new id with the undoing member as its creator (the app has no undo; the idea.created webhook fires again). Over MCP there is no card and no undo, so the idea is gone for good.",
     "undoable": true
   },
   {
@@ -188,7 +196,7 @@
     "module": "media",
     "risk": "AlwaysAsk",
     "scope": "media:write",
-    "description": "Removes a file from the media library. Posts that already carry it keep it. The member confirms every time.",
+    "description": "Deletes a file from the media library and its stored copies. Refused while the file is used by a post (remove it from those posts first) and while it is still uploading or processing. One file per call (the app\u0027s bulk delete has no tool). There is no undo. In Copilot the member confirms every time. Over MCP no card is shown, so confirm with the person first.",
     "undoable": false
   },
   {
@@ -196,7 +204,7 @@
     "module": "posts",
     "risk": "AlwaysAsk",
     "scope": "posts:write",
-    "description": "Deletes a scheduled, pending-approval or failed post from Viraly. Irreversible; the member confirms every time. For drafts use delete_draft; to keep a post but stop it, use cancel_post.",
+    "description": "Deletes a scheduled post (one on its way to the network included), a pending-approval or a failed post from Viraly. When it is an evergreen original its recycled copies are deleted with it, and the result counts them (recycledCopiesDeleted). Irreversible. In Copilot the member confirms on a card every time; over MCP there is no card and no undo. A published post is refused: deleting it in Viraly would not remove it from the network. For drafts use delete_draft; to keep a post but stop it, use cancel_post.",
     "undoable": false
   },
   {
@@ -204,7 +212,7 @@
     "module": "short_links",
     "risk": "AlwaysAsk",
     "scope": "url_shortener:write",
-    "description": "Deletes a short link. Anyone who opens it afterwards gets nothing, including in posts already published. The member confirms every time.",
+    "description": "Deletes a short link from Viraly with its click history and post associations. A Viraly link stops resolving, including in posts already published; a Bitly, Dub or Rebrandly link keeps resolving at the provider. There is no undo. In Copilot the member confirms every time; over MCP no card is shown, so confirm with the person first.",
     "undoable": false
   },
   {
@@ -212,7 +220,7 @@
     "module": "social_sets",
     "risk": "AlwaysAsk",
     "scope": "social_sets:write",
-    "description": "Deletes a social set with all its channels, posts and inbox history. Irreversible; the member confirms on a card every time.",
+    "description": "Deletes a social set with all its channels, every post (published history and analytics included), its inbox history and every file of its media library, as the app\u0027s list does: YouTube access is revoked, the workspace\u0027s webhooks hear each channel disconnect, and channels locked by the plan\u0027s limit are re-evaluated. The card and the result count the channels, posts and media files. A workspace keeps at least one social set, so the last one is refused, and so is a set with a file still uploading or processing (delete it once the file is done). Irreversible: in Copilot the member confirms every time and a conversation cannot delete its own set; over MCP no card is shown, so confirm with the person first.",
     "undoable": false
   },
   {
@@ -220,7 +228,7 @@
     "module": "channels",
     "risk": "AlwaysAsk",
     "scope": "channels:write",
-    "description": "Disconnects a channel from Viraly: its scheduled posts and inbox history are removed. Irreversible; the member confirms on a card every time.",
+    "description": "Disconnects a channel from Viraly, as the app\u0027s Disconnect does, and deletes everything Viraly holds for it: every post including the published history and its analytics, comments and approvals, and its inbox conversations with their messages and notes. Nothing is removed on the network itself; for YouTube Viraly\u0027s Google access is revoked, the inbox\u0027s webhooks for the channel are dropped, the workspace\u0027s webhooks get ChannelDisconnected, and a channel locked by the plan\u0027s limit may unlock. The card and the result count the posts and conversations deleted. Irreversible: in Copilot the member confirms every time; over MCP no card is shown, so confirm with the person first.",
     "undoable": false
   },
   {
@@ -228,7 +236,7 @@
     "module": "posts",
     "risk": "ReversibleWrite",
     "scope": "posts:write",
-    "description": "Copies a post's text and media into a new draft, on the same channel or another. Works for published and failed posts too.",
+    "description": "Copies a post into a new draft on the same channel or another and saves the draft at once (the app\u0027s Duplicate only opens the composer with the copy, and saves nothing until the member does): its text, title, media with alt text, categories and platform settings; on another platform the settings are rebuilt from the text. Anything given here replaces what is copied. Works for published and failed posts too. The copy is planned for now, so it counts against the plan\u0027s monthly post quota and is refused once the month is full. Undo deletes the copy while it is still a draft; over MCP there is no card and no undo.",
     "undoable": true
   },
   {
@@ -236,7 +244,7 @@
     "module": "analytics",
     "risk": "Read",
     "scope": "analytics:read",
-    "description": "Post metrics of a date range as CSV text, one row per published post, up to 100 rows. Hand it to download_file for a file.",
+    "description": "One channel\u0027s post metrics of a date range as CSV text with the app\u0027s export writer and columns (ID, External ID, Published At in the set\u0027s timezone, Content, Post URL, Image URL, then the platform\u0027s metric columns), oldest first. Returns the text of up to 100 rows, the total and whether it stopped short: the app\u0027s file has every row, so a busy channel\u0027s full export is the app\u0027s. It makes no file, and the PDF report (Business and above) exists only in the app. Needs the Influencer plan or above, as the app\u0027s export does. A start date before the plan\u0027s analytics retention is moved up to it (retentionNote), where the app\u0027s date picker would not offer it.",
     "undoable": false
   },
   {
@@ -244,7 +252,7 @@
     "module": "posts",
     "risk": "Read",
     "scope": "posts:read",
-    "description": "The posts of a date range as CSV text (date, channel, status, title, link), up to 100 rows. Hand the text to download_file to give the member a file.",
+    "description": "The posts of a date range as CSV text with the app\u0027s export columns (Title, Scheduled At, Status, Channel, Platform, Post URL, Image URL, Created By), by scheduled time. Returns the text of up to 100 rows, the total and whether it stopped short; it makes no file, and a PDF or an emailed export exists only in the app. Needs the Influencer plan or above, as the app\u0027s export does.",
     "undoable": false
   },
   {
@@ -252,7 +260,7 @@
     "module": "bio_links",
     "risk": "Read",
     "scope": "subscribers:read",
-    "description": "A bio page's subscribers as CSV text (name, email, phone, date), up to 100 rows. Hand it to download_file for a file.",
+    "description": "A bio page\u0027s subscribers as CSV text with the app\u0027s columns (Email, Name, Phone, Subscribed On, in UTC as yyyy-MM-dd HH:mm:ss), newest first, with the app\u0027s search and date filters; up to maxRows rows (default 1,000), truncated when more exist. Returns text, not a file. Needs the Influencer plan or above, as the app\u0027s CSV and Excel export.",
     "undoable": false
   },
   {
@@ -260,63 +268,63 @@
     "module": "posts",
     "risk": "Read",
     "scope": "posts:read",
-    "description": "The empty posting slots of the active social set's channels in a date range, earliest first: each with channel and local time. A slot is empty when no scheduled post sits in it. Use it for \"fill the empty slots next week\".",
+    "description": "The empty posting slots of the active social set\u0027s channels in a date range, earliest first: each with channel and local time. A slot is empty when no post at all sits at its time on that channel (a queued draft takes it, as in the app\u0027s queue and the queue placement); truncated says when more existed than limit. Channels without slots and channels that cannot publish are named. Use it for \u0022fill the empty slots next week\u0022.",
     "undoable": false
   },
   {
     "name": "generate_alt_text",
     "module": "ai",
     "risk": "Read",
-    "scope": "media:read",
-    "description": "Looks at an image in the media library and drafts alt text for it. Returns text; update_alt_text saves it.",
+    "scope": "posts:write",
+    "description": "Looks at an image in the media library (a video\u0027s poster for a video) and drafts alt text for it within the platform\u0027s composer limit, in a language, shortening up to twice when the draft is over (up to three model calls); fitsLimit says whether it fits, and platformTakesAltText false with a note says the platform\u0027s posts take none. Returns text; update_alt_text with the postId saves it on the post, where the networks read it. Over MCP the three model calls take one permit of the workspace\u0027s AI budget.",
     "undoable": false
   },
   {
     "name": "generate_caption",
     "module": "ai",
     "risk": "Read",
-    "scope": "posts:read",
-    "description": "Writes or reworks a caption with the composer's AI assistant: new from a topic, or rephrased, shortened, expanded, more casual or more formal. Returns text only; nothing is saved.",
+    "scope": "posts:write",
+    "description": "Writes or reworks a caption with the composer\u0027s AI assistant: new from a topic, or rephrased, shortened, expanded, more casual or more formal, in a tone, for a platform. Returns text only; nothing is saved. No hashtags are written (generate_hashtags does that).",
     "undoable": false
   },
   {
     "name": "generate_hashtags",
     "module": "hashtags",
     "risk": "Read",
-    "scope": "hashtags:read",
-    "description": "Suggests hashtags for a post with the composer's hashtag generator. Returns text only.",
+    "scope": "posts:write",
+    "description": "Suggests hashtags for a topic with the composer\u0027s hashtag generator (its field takes up to 512 characters): the tags as a list, plus the generator\u0027s own text with its groupings. Nothing is saved.",
     "undoable": false
   },
   {
     "name": "generate_ideas",
     "module": "ideas",
     "risk": "Read",
-    "scope": "ideas:read",
-    "description": "Suggests post ideas for a business and audience with the app's idea generator. Returns text; create_idea saves the ones the member likes.",
+    "scope": "posts:write",
+    "description": "Suggests one post idea (two to four sentences) for a business and audience with the app\u0027s idea generator; call it again for another. Returns text; create_idea saves the ones the member likes.",
     "undoable": false
   },
   {
     "name": "generate_image",
     "module": "ai",
     "risk": "ReversibleWrite",
-    "scope": "media:write",
-    "description": "Generates an image with the app's image model and saves it to the media library. It counts against the plan's monthly image allowance, so the member confirms it.",
+    "scope": "posts:write",
+    "description": "Generates an image with the app\u0027s image model and saves it in the active social set\u0027s media library (list_media, get_media and the post tools\u0027 mediaIds see it). It counts against the plan\u0027s monthly image allowance (the result has imagesThisMonth); deleting the image afterwards does not give the allowance back. In Copilot the member confirms it on a card unless they allowed it, and the call returns the image after about a minute, ready true once it is Completed (else get_media says when); undo removes the image. Over MCP there is no card and no undo, and the call returns a job at once instead, because the generation outlasts the connection\u0027s timeout: resolve it with get_image_generation.",
     "undoable": true
   },
   {
     "name": "generate_link_title",
     "module": "ai",
     "risk": "Read",
-    "scope": "posts:read",
-    "description": "Writes a short headline for a link preview or a bio link button.",
+    "scope": "posts:write",
+    "description": "Writes a short headline (3 to 8 words) for a bio link button, from a caption, an image, or both, with the generator the bio link\u0027s automatic titles use. Returns text only.",
     "undoable": false
   },
   {
     "name": "generate_variations",
     "module": "ai",
     "risk": "Read",
-    "scope": "posts:read",
-    "description": "Writes alternative versions of a caption, for A/B tests or for posting the same news on several days.",
+    "scope": "posts:write",
+    "description": "Writes alternative versions of a caption with the composer\u0027s variation generator (their native home is a post\u0027s evergreenSettings.variations; also A/B tests or the same news on several days). Returns text only.",
     "undoable": false
   },
   {
@@ -324,7 +332,7 @@
     "module": "analytics",
     "risk": "Read",
     "scope": "analytics:read",
-    "description": "When the active social set's published posts did best: average engagement by weekday and by local hour over a look-back window, with how many posts each figure rests on.",
+    "description": "When the active social set\u0027s published posts did best: the average engagement rate (or engagement, engagement = likes \u002B comments \u002B shares \u002B clicks, the app\u0027s universal engagement (null for YouTube: not a YouTube figure)) by weekday and by local hour, and the ten best weekday and three-hour windows, over every post of the window with collected metrics (up to 10,000), with how many posts each figure rests on. The app has no best-times figure for your own posts (its best times are for competitors); this one is computed by the tool. Posts without impressions or video views have no rate. With any YouTube post in scope nothing is averaged (byWeekday, byHour and bySlot are null and withheld is true), as the app shows no derived engagement on a view that includes YouTube: give a platform or a channel that is not YouTube. A hint, not a rule: set_posting_slots sets the slots.",
     "undoable": false
   },
   {
@@ -332,7 +340,7 @@
     "module": "bio_links",
     "risk": "Read",
     "scope": "biolinks:read",
-    "description": "A bio page's traffic over a period: views, unique visitors, clicks, click-through rate, bounce rate, and its most clicked links.",
+    "description": "A bio page\u0027s traffic over a period, the numbers of the app\u0027s analytics tab: overview (views, unique visitors, clicks, click-through rate, sessions, average session length, bounce rate, scroll depth), the 50 most clicked links with their click-through rate (truncatedLinks says when there are more), the daily series, the 20 countries and 20 cities with the most views (truncatedCountries says when more countries had views), devices, browsers, referrers and UTM campaigns, and activity by hour and weekday. Overview covers up to 365 days; the other parts at most 91 days (first and last day no more than 90 days apart), as in the app, and are left out for a longer period. It needs the Influencer plan or above, as the app\u0027s analytics tab and its endpoints.",
     "undoable": false
   },
   {
@@ -340,7 +348,7 @@
     "module": "bio_links",
     "risk": "Read",
     "scope": "biolinks:read",
-    "description": "One bio page: its profile title and bio, its sections, its links (with ids for update_block and remove_block) and its social links.",
+    "description": "One bio page as the editor shows it: URL and domain, profile (title, bio, image), theme (selectedPreset is the Design tab theme it was set from; the stored preset key, which nothing reads, is left out), sections in order, every content list with item ids for update_block and remove_block (links, social icons, media, grid, tipping, products, RSS feeds), the email form\u0027s texts and its integration, pixels, settings, contact card, auto-add limit and linked channels (their ids and display settings). The email form\u0027s field order, labels, colours and default country are not included.",
     "undoable": false
   },
   {
@@ -348,7 +356,7 @@
     "module": "posts",
     "risk": "Read",
     "scope": "posts:read",
-    "description": "The calendar of the active social set for a date range: every post per day with its local time, channel, status and caption start. Use it to see what is planned or where the gaps are.",
+    "description": "The calendar of the active social set for a date range: per day, up to 40 posts with id, local time, channel, status, caption start, title, public link, error, media count, categories and the evergreen flag; a day with more says truncated with its total. Posts of locked channels (past the plan\u0027s channel limit) are left out, as in the app. Use it to see what is planned or where the gaps are.",
     "undoable": false
   },
   {
@@ -356,7 +364,7 @@
     "module": "analytics",
     "risk": "Read",
     "scope": "analytics:read",
-    "description": "How each post category performed in the active social set over a date range: posts, reach, impressions, engagement and engagement rate per category, for comparing content pillars.",
+    "description": "How post categories performed in the active social set over a date range, with the app\u0027s category analytics summary: per category (or combined, the app\u0027s campaign figure) the posts, the universal totals (impressions, likes, comments, shares, clicks, video views, engagement = likes \u002B comments \u002B shares \u002B clicks, the app\u0027s universal engagement (null for YouTube: not a YouTube figure), engagement rate) and the breakdown per platform. The totals are the app\u0027s: YouTube is left out of them when another platform is present (it stays in platformBreakdown), and the totals\u0027 reach is always null, as in the app; each platform\u0027s reach is in platformBreakdown. platformsCovered and platformsLeftOut say which platforms a total adds up. As the app\u0027s summary and comparison, a category with any YouTube post has no engagement or engagement rate in its totals (platformBreakdown keeps each other platform\u0027s own). Unlike the app\u0027s compare (2 to 8 categories, no platform filter) it takes up to 100 categories, one summary each, and a platform filter. No tool lists a category\u0027s posts; list_top_posts ranks the whole social set. Unknown category ids are listed, not fatal.",
     "undoable": false
   },
   {
@@ -364,7 +372,7 @@
     "module": "channels",
     "risk": "Read",
     "scope": "channels:read",
-    "description": "One channel in detail: platform, account type, status and why (an expired token, a locked channel over the plan's limit), when its token was last refreshed, its posting slots and how many posts it has.",
+    "description": "One channel in detail, as the app\u0027s channel card shows it: platform, account type, username, status and why (an expired token with the network\u0027s message and what to do, a locked channel over the plan\u0027s limit, a disabled one), needsReconnect where the app offers Reconnect (expired or disabled), who connected it, the permissions it granted, when its token was last and is next refreshed, when analytics were last and are next fetched, its posting slots with their ids, how many posts it has, when its history sync started and the earliest day it has analytics for (syncStartedAt, earliestMetricAt). For an X account also the subscription type and the caption limit that applies (280 weighted characters, or 25,000 for Premium on a paid plan).",
     "undoable": false
   },
   {
@@ -372,7 +380,7 @@
     "module": "analytics",
     "risk": "Read",
     "scope": "analytics:read",
-    "description": "A channel's performance in a date range: the posts published and their summed metrics on every platform, plus the account's own numbers (followers, reach, engagement) with the previous period of equal length on Facebook and Instagram.",
+    "description": "A channel\u0027s performance in a date range: every published post of the range with collected metrics summed with the app\u0027s universal metrics (postTotals: engagement = likes \u002B comments \u002B shares \u002B clicks, the app\u0027s universal engagement (null for YouTube: not a YouTube figure); reach is the channel\u0027s own sum, null where the platform reports none; up to 10,000 posts, truncated says when it stopped short), plus the account\u0027s headline numbers from the services the app\u0027s analytics page reads: Facebook and Instagram with the previous period (reach, views, engaged accounts, follows, Instagram followers), LinkedIn follower gains and page views, YouTube channel totals (views, watch time, subscribers), Threads totals and followers, the Pinterest account report with the app\u0027s default filters, and the TikTok, X, Bluesky and Mastodon follower counts. It does not carry the page\u0027s daily series, demographics, audience, traffic-source, device, media-type or follow-type breakdowns, nor the Pinterest report\u0027s filters. A network that does not answer leaves accountError set and the post totals stand. A start date before the plan\u0027s analytics retention is moved up to it.",
     "undoable": false
   },
   {
@@ -380,7 +388,7 @@
     "module": "inbox",
     "risk": "Read",
     "scope": "comment_rules:read",
-    "description": "What a comment rule, or a post's rules, did: totals by status and skip reason, and the recent replies, DMs and hides with the text we sent. Commenters' own text is not included.",
+    "description": "What a comment rule, or a post\u0027s rules, did: totals by status and skip reason, and the recent replies, DMs and hides, newest first, with the text we sent (its first 200 characters). Commenters\u0027 own text is not included. A deleted rule\u0027s activity is gone with it.",
     "undoable": false
   },
   {
@@ -388,7 +396,7 @@
     "module": "bio_links",
     "risk": "Read",
     "scope": "biolinks:read",
-    "description": "A bio page's custom domain and its DNS status, with the records the member still has to add at their domain registrar.",
+    "description": "A bio page\u0027s custom domain and its live status, with the DNS records the member still has to add at their registrar. Unless the domain is already AVAILABLE the status is checked with the hosting now and saved on the page, as the editor\u0027s refresh does; that save counts as an edit, so a Copilot undo of an earlier change to this page is refused afterwards. Statuses: CREATING, REQUESTING_CERTIFICATE, PENDING_VERIFICATION, PENDING_DEPLOYMENT, AVAILABLE, FAILED, or UNKNOWN when none is stored; a page without a custom domain has status NONE, no records and its Viraly URL. checkedAt is the last check with the hosting. A field with no value is left out of the result: requestedAt always (no request time is recorded), checkedAt before the first check.",
     "undoable": false
   },
   {
@@ -396,7 +404,23 @@
     "module": "hashtags",
     "risk": "Read",
     "scope": "hashtags:read",
-    "description": "One saved hashtag list in full.",
+    "description": "One saved hashtag list of the active social set in full: id, topic, the hashtags and when it was made.",
+    "undoable": false
+  },
+  {
+    "name": "get_idea",
+    "module": "ideas",
+    "risk": "Read",
+    "scope": "ideas:read",
+    "description": "One idea in full, as the app\u0027s idea modal shows it: id, board, title, the whole caption and notes, link, planned date, status, order, tags, its media with type, name and thumbnail, the id of the member who made it, and when it was made and last changed.",
+    "undoable": false
+  },
+  {
+    "name": "get_image_generation",
+    "module": "ai",
+    "risk": "Read",
+    "scope": "media:read",
+    "description": "The state of an image generation started by generate_image when it returned a job: Pending, Running, Succeeded with the mediaId of the image in the media library, or Failed with the reason. It waits up to 40 seconds for the generation unless wait is false. Nothing is charged for a failed one.",
     "undoable": false
   },
   {
@@ -404,7 +428,7 @@
     "module": "media",
     "risk": "Read",
     "scope": "media:read",
-    "description": "One file of the media library: type, status, size, duration, alt text, tags and collection.",
+    "description": "One file of the media library, any status, as the app\u0027s file view shows it: type, status, name, width and height, duration, size, urls, alt text, tags, collection, who added it and when, the source, and the error of a file that failed. Resolves a file that upload_media_from_url, import_media, request_media_render or generate_image made; it answers at once and does not wait for a file to finish, so call it again for a file still uploading or processing.",
     "undoable": false
   },
   {
@@ -412,7 +436,7 @@
     "module": "channels",
     "risk": "Read",
     "scope": "channels:read",
-    "description": "Each platform's rules for media and text: formats, file sizes, aspect ratios, video lengths, how many files, caption length and hashtag limits. Check them before drafting; validate_post checks a concrete post.",
+    "description": "Each platform\u0027s rules for media and text, from the app\u0027s composer table and the server\u0027s validator: formats, file sizes, aspect ratios, resolutions, video lengths, how many files, caption, title, first-comment, link and hashtag limits, reel cover photos and the YouTube thumbnail. Where the composer and the server differ, a note says which one checks it (for example Facebook reel length, which the server does not check). Check them before drafting; validate_post runs the server\u0027s check on a concrete post.",
     "undoable": false
   },
   {
@@ -420,7 +444,7 @@
     "module": "posts",
     "risk": "Read",
     "scope": "posts:read",
-    "description": "One post of the active social set: the full caption, channel, status, local scheduled time, public link, last error and summary metrics.",
+    "description": "One post of the active social set as the app reads it: the text (on X, Threads, Bluesky and Mastodon the first post of the thread; config holds the rest), title, channel, status, local scheduled time, public link, the stored config (the platform settings nested as the composer sends them: title, first comment, board, privacy, thread posts), the attachments with alt text and order, categories, approval state, evergreen flags, the last error with its reason and hint, and summary metrics. queued is the app\u0027s flag (the status is scheduled or on the way to publishing); inPostingSlot says whether the post sits in one of the channel\u0027s posting slots (a post whose slot was removed stays queued at its time with inPostingSlot false). To change a setting, send update_post a config block with only the fields to change, in the shape update_post\u0027s config takes (for example config.youTube.contentOptions.title); the stored config has members update_post does not take.",
     "undoable": false
   },
   {
@@ -428,7 +452,7 @@
     "module": "analytics",
     "risk": "Read",
     "scope": "analytics:read",
-    "description": "What one post of the active social set did: reach, impressions, views, likes, comments, shares, saves, clicks and when the numbers were last updated.",
+    "description": "What one post of the active social set did: the flattened metrics (reach, impressions, views, likes, comments, shares, saves, clicks; null where the platform reports none), the app\u0027s universal metrics with the engagement rate, the network\u0027s own metric object as the app\u0027s post view shows it, the link to the live post, and when the numbers were last updated. Engagement is the one the other analytics tools use: engagement = likes \u002B comments \u002B shares \u002B clicks, the app\u0027s universal engagement (null for YouTube: not a YouTube figure); engagement is the universal block\u0027s likes \u002B comments \u002B shares \u002B clicks; the flattened metrics keep the platform\u0027s own fields, so their shares and clicks can differ (X, Threads and Bluesky shares include quotes, X clicks are profile clicks, Pinterest saves are its universal shares and count in engagement).",
     "undoable": false
   },
   {
@@ -436,7 +460,7 @@
     "module": "posts",
     "risk": "Read",
     "scope": "posts:read",
-    "description": "Why a post failed or is stuck: the network's error with its reason and hint, the channel's state, and what usually fixes it.",
+    "description": "Why a post failed or is stuck: the network\u0027s error with its reason and hint, the channel\u0027s state, whether the post\u0027s time has passed while it still waits to publish, the problems the save-time rules find on its stored settings now, and what usually fixes it.",
     "undoable": false
   },
   {
@@ -444,7 +468,7 @@
     "module": "analytics",
     "risk": "Read",
     "scope": "analytics:read",
-    "description": "The published posts of one channel since a date with their metrics, newest first or ranked by engagement, reach or views.",
+    "description": "The published posts with collected metrics of one channel in a date range, as the app\u0027s posts table lists them: newest first, sorted by any of the platform\u0027s own metrics, or ranked over the whole range by engagement, reach or views; paged, with the total, the app\u0027s universal metrics, the flattened and the native metrics, the post type and thumbnail per post. Engagement is the one the other analytics tools use: engagement = likes \u002B comments \u002B shares \u002B clicks, the app\u0027s universal engagement (null for YouTube: not a YouTube figure); engagement is the universal block\u0027s likes \u002B comments \u002B shares \u002B clicks; the flattened metrics keep the platform\u0027s own fields, so their shares and clicks can differ (X, Threads and Bluesky shares include quotes, X clicks are profile clicks, Pinterest saves are its universal shares and count in engagement). The app\u0027s channel posts table shows the platform\u0027s own engagement column instead (Instagram total interactions, LinkedIn\u0027s engagement rate, X engagements, Facebook\u0027s rate over reach); those figures are in native. A ranking by engagement is refused on a YouTube channel. The end date and the ranked mode are the tool\u0027s own; the app\u0027s table takes a start date only. A start date before the plan\u0027s analytics retention is moved up to it.",
     "undoable": false
   },
   {
@@ -452,7 +476,7 @@
     "module": "posts",
     "risk": "Read",
     "scope": "posts:read",
-    "description": "How a post will appear: the full text with its length against the platform's limit, the media in order with type and size, the placement and the local time.",
+    "description": "How a post will appear: the text with its length (on X, Threads, Bluesky and Mastodon the first post, with the whole thread beside it), the placement (post type and system post type), the platform title, first comment, board and link, the media in order with type, dimensions, file size and duration, the local time, and the problems the save-time rules find on its stored settings.",
     "undoable": false
   },
   {
@@ -460,7 +484,7 @@
     "module": "channels",
     "risk": "Read",
     "scope": "channels:read",
-    "description": "The weekly posting slots of each channel (day and local time) that the queue fills. find_free_slots says which of them are empty on given dates.",
+    "description": "The weekly posting slots of each channel (id, day, local time in the social set\u0027s timezone) that the queue fills, with how many posts sit in each (every post in the slot with a future time, whatever its status). The ids are what set_posting_slots takes to move a slot. find_free_slots says which slots are empty on given dates. Up to 100 channels; truncated says when there are more.",
     "undoable": false
   },
   {
@@ -468,7 +492,7 @@
     "module": "channels",
     "risk": "Read",
     "scope": "channels:read",
-    "description": "Where the member reconnects an expired or broken channel. Reconnecting needs the member to sign in to the network themselves, so Copilot cannot do it; it can open the page with navigate.",
+    "description": "Where the member reconnects an expired or broken channel: the app\u0027s social set page, which starts the network\u0027s sign-in for that channel on arrival (Bluesky and Mastodon ask for the credentials on the page). Reconnecting needs the member to sign in to the network themselves, so no tool can do it. In the app Copilot can open the path with navigate; elsewhere give the member the url.",
     "undoable": false
   },
   {
@@ -476,7 +500,7 @@
     "module": "short_links",
     "risk": "Read",
     "scope": "url_shortener:read",
-    "description": "Clicks on one short link: total, by day, by country, by device and the posts that carry it.",
+    "description": "Clicks on one short link: total; by day for the last 60 days that had clicks (UTC days, days without clicks left out); the top 10 countries and top 10 cities; by device and operating system; and the first 10 posts that carry it (postCount has them all). truncated says which lists were cut. Only Viraly\u0027s own redirect counts clicks, so a Bitly, Dub or Rebrandly link always shows 0 here; see its clicks at that provider.",
     "undoable": false
   },
   {
@@ -484,7 +508,7 @@
     "module": "short_links",
     "risk": "Read",
     "scope": "url_shortener:read",
-    "description": "Which shortener the workspace uses by default (Viraly's own, Bitly, Dub or Rebrandly) and its default domain.",
+    "description": "Which shortener the workspace uses by default (Viraly\u0027s own, Bitly, Dub or Rebrandly), which providers are connected with their default domain, and which one and which domain new links are made with: a default that is not connected falls back to Viraly\u0027s own.",
     "undoable": false
   },
   {
@@ -492,7 +516,7 @@
     "module": "social_sets",
     "risk": "Read",
     "scope": "social_sets:read",
-    "description": "The active social set in detail: name, short code, colour, timezone and each connected channel with its status.",
+    "description": "The active social set in detail: name, short code, colour, timezone, when it was created, and each connected channel with its username, who connected it (connectedAs, as the app\u0027s set page shows), account type, status and problem.",
     "undoable": false
   },
   {
@@ -500,7 +524,7 @@
     "module": "short_links",
     "risk": "Read",
     "scope": "url_shortener:read",
-    "description": "What a link shows when shared: its page title, description, site and image.",
+    "description": "What a link shows when shared: its page title, description, site and one image (the composer can also list every image on the page; this tool cannot).",
     "undoable": false
   },
   {
@@ -508,7 +532,7 @@
     "module": "workspace",
     "risk": "Read",
     "scope": "workspace:read",
-    "description": "The workspace and the active social set: names, plan, timezone and how many channels are connected. Use it for questions about the account itself. For the workspace's settings (notifications, API keys, connected apps, webhooks, Slack, Teams, Discord) use get_workspace_settings and its neighbours in the settings module.",
+    "description": "The workspace (id, name, plan, status, when it was created, how many channels it has in all) and the active social set (id, name, timezone, how many channels are connected to it). Use it for questions about the account itself. For the workspace\u0027s settings (notifications, API keys, connected apps, webhooks, Slack, Teams, Discord) use get_workspace_settings and its neighbours in the settings module; for the plan\u0027s limits use get_subscription.",
     "undoable": false
   },
   {
@@ -516,7 +540,7 @@
     "module": "workspace",
     "risk": "Read",
     "scope": "workspace:read",
-    "description": "The brief the members wrote for Copilot: brand voice, audience, do and don't lists, posting rules. The social set's own brief when it has one, otherwise the workspace's.",
+    "description": "The brief the members wrote for Copilot: brand voice, audience, do and don\u0027t lists, posting rules. The social set\u0027s own brief when it has one, otherwise the workspace\u0027s, with when it last changed and the 8,000-character limit.",
     "undoable": false
   },
   {
@@ -524,15 +548,15 @@
     "module": "media",
     "risk": "ReversibleWrite",
     "scope": "media:write",
-    "description": "Imports a file from Dropbox or Unsplash into the active social set's media library. It runs in the background; the result gives the job's state.",
-    "undoable": false
+    "description": "Imports a file into the active social set\u0027s media library the way the app\u0027s import panel does: from a public direct link, a Dropbox direct link or an Unsplash photo id (search_unsplash is the panel\u0027s Unsplash search). The server checks the link at once and refuses a dead, oversized or unsupported one with the reason; the download then runs in the background. The result names the file (mediaId) and the job; get_media on the file says when it is Completed, or why it Failed. Unsplash photos are stored with the photographer\u0027s username in the file name only: credit them where the photo is published (search_unsplash gives the name and profile link). In Copilot undo removes the file once the download has finished. Over MCP there is no card and no undo.",
+    "undoable": true
   },
   {
     "name": "list_bio_integrations",
     "module": "bio_links",
     "risk": "Read",
     "scope": "biolinks:read",
-    "description": "The email-list integrations (for example AWeber, HubSpot, Kit) the active social set's bio pages can send new subscribers to.",
+    "description": "The email and CRM integrations (for example Mailchimp, HubSpot, Kit) connected to the active social set that a bio page\u0027s email form can send new subscribers to; update_bio_page emailIntegrationId attaches one. Pixel and tag integrations are not listed; those are set per page with pixelTracking.",
     "undoable": false
   },
   {
@@ -540,7 +564,7 @@
     "module": "bio_links",
     "risk": "Read",
     "scope": "biolinks:read",
-    "description": "The link-in-bio pages of the active social set: id, title, URL slug and custom domain.",
+    "description": "The link-in-bio pages of the active social set: id, title, slug, public URL, custom domain with its status (the domain serves the page only when AVAILABLE), auto-add limit and dates.",
     "undoable": false
   },
   {
@@ -548,7 +572,7 @@
     "module": "categories",
     "risk": "Read",
     "scope": "categories:read",
-    "description": "The workspace's post categories (content pillars such as Promotions or Tips) with id, colour and how many posts use each.",
+    "description": "The workspace\u0027s post categories (content pillars such as Promotions or Tips), in the app\u0027s order (sort order, then name): id, name, colour, sort order, when each was made, and how many posts and ideas use each, counted across the whole workspace.",
     "undoable": false
   },
   {
@@ -556,7 +580,7 @@
     "module": "channels",
     "risk": "Read",
     "scope": "channels:read",
-    "description": "The connected accounts and pages of the active social set: id, name, username, platform and status (Active, Expired, Disabled, Locked). Use it to turn a channel name into its id.",
+    "description": "The connected accounts and pages of the active social set, in the app\u0027s order: id, name, username, platform, account type, status (Active, Expired, Disabled, Locked), the problem behind a status and who connected it (connectedAs). Use it to turn a channel name into its id; get_channel has the rest of the card.",
     "undoable": false
   },
   {
@@ -564,7 +588,7 @@
     "module": "inbox",
     "risk": "Read",
     "scope": "comment_rules:read",
-    "description": "The comment rules of the active social set, or of one post: id, post, what triggers them, what they do, status and what they did in the last 30 days.",
+    "description": "The comment rules of the active social set, or of one post, newest first: id, post (and whether that post was deleted), what triggers them, what they do, the exclusions, delays and cap, status and what they did in the last 30 days. total counts the rules returned (at most limit), not every rule of the set. With a status filter only the newest limit x 2 rules are looked at, as the comment rules endpoint does, so an older rule in that status can be missing.",
     "undoable": false
   },
   {
@@ -572,7 +596,7 @@
     "module": "evergreen",
     "risk": "Read",
     "scope": "posts:read",
-    "description": "The evergreen schedules of the active social set: which post recycles, how often, how many times so far and whether it is paused.",
+    "description": "The evergreen schedules of the active social set, as the Recycled content page lists them: the post with its channel and thumbnail, every how many days (0 with customDatesLocal), the caption variations, the limit and end date, whether paused, and the copies (generated so far, scheduled, published, drafts; the original is not counted). Paged; hasMore says when there is another page.",
     "undoable": false
   },
   {
@@ -580,7 +604,7 @@
     "module": "feeds",
     "risk": "Read",
     "scope": "feeds:read",
-    "description": "The newest items of a feed: title, link, summary and whether they were used.",
+    "description": "The items of a feed, newest first (a feed keeps its newest 100): id, title, link, summary (cut at 300 characters), image link, published date and status (Unread, Read, or Scheduled once used for a post); paged, with the total and hasMore.",
     "undoable": false
   },
   {
@@ -588,7 +612,7 @@
     "module": "feeds",
     "risk": "Read",
     "scope": "feeds:read",
-    "description": "The RSS and Atom feeds the active social set follows, with unread item counts and fetch errors.",
+    "description": "The RSS and Atom feeds the active social set follows: id, name, URL, description, collection (id and name), status, unread and item counts, last fetch and fetch error; optionally one status or one collection. collections lists the set\u0027s feed collections, empty ones included, for subscribe_feed\u0027s feedCollectionId.",
     "undoable": false
   },
   {
@@ -596,7 +620,7 @@
     "module": "hashtags",
     "risk": "Read",
     "scope": "hashtags:read",
-    "description": "The saved hashtag lists of the active social set: id, topic and the hashtags.",
+    "description": "The saved hashtag lists of the active social set, newest first: id, topic, the hashtags in full and when each was made. At most 100; truncated says when there are more.",
     "undoable": false
   },
   {
@@ -604,7 +628,7 @@
     "module": "ideas",
     "risk": "Read",
     "scope": "ideas:read",
-    "description": "The idea boards of the active social set with how many ideas each holds.",
+    "description": "The idea boards of the active social set (id, name, description, colour, order) with how many ideas each holds. A set with no boards gets the app\u0027s four default boards on the first call, with the app\u0027s two sample ideas on the Unassigned board, as the Ideas page does on its first visit.",
     "undoable": false
   },
   {
@@ -612,7 +636,7 @@
     "module": "ideas",
     "risk": "Read",
     "scope": "ideas:read",
-    "description": "The ideas on one board: title, caption, notes, link, planned date and status.",
+    "description": "The ideas on one board in the board\u0027s order, or the ideas planned in a date range across the set\u0027s boards: id, title, caption (cut at 300 characters) and notes (cut at 200), with captionTruncated and notesTruncated saying when they were cut, link, planned date, status, order, tags and media ids; paged (50 by default, up to 100), with the total and hasMore. get_idea reads one idea in full; read it before editing a cut text with update_idea.",
     "undoable": false
   },
   {
@@ -620,7 +644,7 @@
     "module": "media",
     "risk": "Read",
     "scope": "media:read",
-    "description": "Files in one media library collection of the active social set, 25 per page, newest first: id, type, size, alt text and tags. Use the ids as mediaIds in posts.",
+    "description": "Finished (Completed) files in one media library collection of the active social set, with the library toolbar\u0027s filters: type, favourites, search, tags and uploader (me, others, one member, or none). Favourites first, then newest, unless sort or favoritesFirst say otherwise. Each file has id, type, status, name, width and height, duration, size, urls, alt text, tags, favourite, when and by whom it was added (files added through an API connection, or by a member since removed, have no uploader: uploadedBy none finds them). hasMore and nextCursor page it. Use the ids as mediaIds in posts. Files still uploading or processing are not listed; get_media reads one in any status.",
     "undoable": false
   },
   {
@@ -628,7 +652,7 @@
     "module": "media",
     "risk": "Read",
     "scope": "media:read",
-    "description": "The media library's collections (folders) in the active social set, with how many files each holds.",
+    "description": "The media library\u0027s collections (folders) of the active social set in the app\u0027s order: id, name, how many finished (Completed) files each holds, whether it is starred, its order, tags, notes and when it was made. Renaming, starring, reordering and deleting a collection are done in the app.",
     "undoable": false
   },
   {
@@ -636,7 +660,7 @@
     "module": "approvals",
     "risk": "Read",
     "scope": "posts:read",
-    "description": "Posts of the active social set in the approval workflow: by default the ones waiting for this member to approve, with channel, local time and caption start.",
+    "description": "Posts of the active social set in the approval workflow, earliest scheduled time first (the app reviews them in the calendar, filtered by status): by default the ones waiting for this member to approve; through an API connection, which has no member, give filter All. Each with its approval: who asked and when, the rule (all must approve, or N of M), every approver\u0027s decision with its time and comment (a rejection\u0027s reason), and whether it is resolved, plus the post\u0027s error if it has one. Paged; hasMore says when there is another page.",
     "undoable": false
   },
   {
@@ -644,7 +668,7 @@
     "module": "channels",
     "risk": "Read",
     "scope": "channels:read",
-    "description": "The boards of a Pinterest channel, with their ids. A pin needs a board.",
+    "description": "The boards of a Pinterest channel with their ids, as the app\u0027s board picker shows them. A pin needs one: pass the id as boardId on create_draft, schedule_post or update_post. When none fits, create_pinterest_board makes one, as the picker\u0027s create does; a board made on Pinterest itself is listed with refresh true. Without refresh the list is what the last fetch stored, so a board made on Pinterest since may be missing.",
     "undoable": false
   },
   {
@@ -652,7 +676,7 @@
     "module": "approvals",
     "risk": "Read",
     "scope": "posts:read",
-    "description": "The team's internal comments on a post (not comments from the network), oldest first, with who wrote them.",
+    "description": "The team\u0027s internal comments on a post (not comments from the network), oldest first, as the post\u0027s comment thread shows them: who wrote each, its full text (up to 5,000 characters; a mention is written in it as @[userId], which the app shows as the member\u0027s name), when it was edited, the members mentioned in it and its attachments.",
     "undoable": false
   },
   {
@@ -660,7 +684,7 @@
     "module": "posts",
     "risk": "Read",
     "scope": "posts:read",
-    "description": "Posts of the active social set, 25 per page, latest scheduled first: id, a short caption, channel, status, local scheduled time and summary metrics. For one post in full use get_post; for the best performers use list_top_posts; for posts waiting for the member's approval use list_pending_approvals (approvals module), which knows who approves what.",
+    "description": "Posts of the active social set, 25 per page, latest scheduled first with unscheduled drafts last: id, a short caption, title, channel, status, local scheduled time, media count, categories, approval state and summary metrics. startDate and endDate bound the scheduled date in the social set\u0027s timezone (dateField switches to the creation or publish date; a published post the platform import brought in has no stored publish time and counts by its scheduled time, when it went out); hasMore says when another page exists. For one post in full use get_post; for the best performers use list_top_posts; for posts waiting for the member\u0027s approval use list_pending_approvals (approvals module), which knows who approves what.",
     "undoable": false
   },
   {
@@ -668,7 +692,7 @@
     "module": "evergreen",
     "risk": "Read",
     "scope": "posts:read",
-    "description": "The copies an evergreen post has produced so far: each copy's time and status.",
+    "description": "The copies of an evergreen post, earliest first: published ones and the ones still scheduled or drafted, each with its local time and status. The original post is named apart, not counted as a copy. Give the original\u0027s id: a recycled copy or a post with no evergreen schedule is refused. Paged; hasMore says when there is another page.",
     "undoable": false
   },
   {
@@ -676,7 +700,7 @@
     "module": "short_links",
     "risk": "Read",
     "scope": "url_shortener:read",
-    "description": "The workspace's short links, 25 per page, newest first: short URL, original URL, clicks and the shortener that made it.",
+    "description": "The workspace\u0027s active short links, newest first: id, short code, short URL, original URL, clicks counted by Viraly\u0027s redirect and the shortener that made it; paged, with the total and hasMore. Links switched off (unused after 24 hours) are not listed.",
     "undoable": false
   },
   {
@@ -684,7 +708,7 @@
     "module": "workspace",
     "risk": "Read",
     "scope": "social_sets:read",
-    "description": "The social sets this member can open, with name, short code and timezone, and which one is active. Tools work on the active set; to act on another one the member named, pass its id as socialSetId.",
+    "description": "Every social set this member can open, as the app\u0027s list shows them: id, name, short code, colour, timezone, when it was created, how many channels it has, and which one is active (null through an API connection, which has no active set). Tools work on the active set; to act on another one the member named, pass its id as socialSetId.",
     "undoable": false
   },
   {
@@ -692,7 +716,7 @@
     "module": "bio_links",
     "risk": "Read",
     "scope": "subscribers:read",
-    "description": "People who signed up on a bio page's email form, newest first: name, email and date; at most 25, with the total.",
+    "description": "People who signed up on a bio page\u0027s email form, newest first: id, name, email, phone and when; paged (page, pageSize), with the total and hasMore, and the app\u0027s search and date filters. Paging through the list is a subscriber export, so below the Influencer plan email and phone come back empty (null) and note says why; the app\u0027s Subscribers screen shows them a page at a time.",
     "undoable": false
   },
   {
@@ -700,7 +724,7 @@
     "module": "workspace",
     "risk": "Read",
     "scope": "workspace:read",
-    "description": "Timezone ids the app accepts, for setting a social set's timezone. Filter with search; at most 50 come back.",
+    "description": "Timezone ids the app accepts for a social set (IANA names such as Europe/Berlin), with the display name and the standard UTC offset. Up to 100 come back with the total; use search to find one.",
     "undoable": false
   },
   {
@@ -708,7 +732,7 @@
     "module": "analytics",
     "risk": "Read",
     "scope": "analytics:read",
-    "description": "The best performing published posts of the active social set in a date range, across its channels, with summary metrics. Use it for questions like \"what was my best post this week\".",
+    "description": "The best (or worst) published posts with collected metrics of the active social set (or one channel or platform) in a date range, ranked over every post of the range in the order of the app\u0027s category posts table, paged, with the total. Every post carries the app\u0027s universal metrics (engagement = likes \u002B comments \u002B shares \u002B clicks, the app\u0027s universal engagement (null for YouTube: not a YouTube figure); engagement rate = engagement over impressions, else video views) and the flattened metrics; engagement is the universal block\u0027s likes \u002B comments \u002B shares \u002B clicks; the flattened metrics keep the platform\u0027s own fields, so their shares and clicks can differ (X, Threads and Bluesky shares include quotes, X clicks are profile clicks, Pinterest saves are its universal shares and count in engagement). A ranking by engagement or engagement rate is refused when YouTube posts are in the range, as the app\u0027s highlights show no such ranking with YouTube in scope: give a platform or a channel that is not YouTube, or rank by likes, comments, shares, clicks, views or impressions. A native sort ranks every platform\u0027s own figure side by side. No native endpoint ranks a whole social set; the app ranks the posts of chosen categories. A start date before the plan\u0027s analytics retention is moved up to it. Use it for \u0022what was my best post this week\u0022.",
     "undoable": false
   },
   {
@@ -716,7 +740,7 @@
     "module": "media",
     "risk": "ReversibleWrite",
     "scope": "media:write",
-    "description": "Moves files to another collection of the same social set.",
+    "description": "Moves up to 100 files to another collection of the same social set. Every id must be in this set\u0027s library; the files\u0027 tags are left as they are, as in the app. In Copilot undo moves each file back to the collection it was in. Over MCP there is no card and no undo.",
     "undoable": true
   },
   {
@@ -724,7 +748,7 @@
     "module": "posts",
     "risk": "ReversibleWrite",
     "scope": "posts:write",
-    "description": "Puts a draft or scheduled post into its channel's next empty posting slot; it then publishes by itself at that time.",
+    "description": "Puts a draft or scheduled post into its channel\u0027s next empty posting slot from now; it then publishes by itself at that time. On a channel without posting slots a draft stays a draft and the result says so, and a scheduled post is refused, so it keeps its time. Refused for a post waiting for approval, publishing, published or failed. Undo puts it back as it was while its old time has not passed; over MCP there is no card and no undo.",
     "undoable": true
   },
   {
@@ -732,7 +756,7 @@
     "module": "inbox",
     "risk": "ReversibleWrite",
     "scope": "comment_rules:write",
-    "description": "Pauses a comment rule, or every rule of a post, so no more replies go out; or resumes them. Undo puts the rules back as they were.",
+    "description": "Pauses a comment rule, or every rule of a post, so it sends no more replies or DMs and hides no more comments; or resumes them. Ended rules are left as they are. The result lists each rule\u0027s status before and after (rules[].from and to). In Copilot undo puts each rule back in its earlier status (a rule paused again gets the default reason, not its old one); over MCP there is no card and no undo, so resume or pause again by hand.",
     "undoable": true
   },
   {
@@ -740,7 +764,7 @@
     "module": "evergreen",
     "risk": "ReversibleWrite",
     "scope": "posts:write",
-    "description": "Pauses an evergreen schedule so no new copies are made, or resumes it.",
+    "description": "Pauses an evergreen schedule, as the Recycled content page\u0027s Pause does: every copy not yet published (scheduled, drafted, awaiting approval, being processed or being published) becomes a draft, so no copy publishes. The original post keeps its status: a scheduled original still publishes at its time (cancel_post or delete_scheduled_post stops it). Resume (resume true) schedules again the drafted copies whose time is still ahead, deletes those whose time passed while paused, and keeps as drafts those whose media is not usable. Neither makes new copies. To end recycling for good, use stop_evergreen_schedule. In Copilot undo does the opposite (a resume after a pause also deletes the copies whose time passed, and copies that were awaiting approval or drafted before the pause come back scheduled); over MCP there is no card and no undo.",
     "undoable": true
   },
   {
@@ -748,7 +772,7 @@
     "module": "posts",
     "risk": "AlwaysAsk",
     "scope": "posts:write",
-    "description": "Publishes a draft or scheduled post to the network right now. Irreversible: once on the network Viraly cannot take it back. The member confirms on a card every time.",
+    "description": "Publishes a draft or scheduled post to the network right now, as the app\u0027s Publish Now does: the post is checked again with the save-time rules (a refusal lists the problems and changes nothing), its media must be ready, and a post.updated webhook is sent. Refused for a post waiting for approval, publishing, published or failed (use retry_failed_post). Irreversible: once on the network Viraly cannot take it back. In Copilot the member confirms on a card every time; over MCP there is no card, so the caller\u0027s own confirmation is the only one. The result has id, status (the raw status, ProcessingEnqueued once it starts), displayStatus, channel, caption, mediaCount and a note.",
     "undoable": false
   },
   {
@@ -756,15 +780,15 @@
     "module": "bio_links",
     "risk": "ReversibleWrite",
     "scope": "biolinks:write",
-    "description": "Removes a link button or a social icon from a bio page.",
+    "description": "Removes an item (link, social icon, video, grid tile, tip button, product or RSS feed) from a bio page. A section left empty disappears from the page, as on the editor\u0027s save, except the links section while the page auto-adds posts (they show in its place) and the RSS feed section, which the editor keeps. In Copilot it can be undone until the page is edited again, unless the plan no longer allows what the undo would put back; over MCP there is no undo.",
     "undoable": true
   },
   {
-    "name": "request_approval",
-    "module": "approvals",
-    "risk": "ReversibleWrite",
-    "scope": "posts:write",
-    "description": "Sends a post for approval: it waits as Pending approval and does not publish until approved. The approvers are notified as in the app.",
+    "name": "remove_custom_domain",
+    "module": "bio_links",
+    "risk": "AlwaysAsk",
+    "scope": "biolinks:write",
+    "description": "Releases a bio page\u0027s custom domain: the page serves from its Viraly URL (get_bio_page url) again and the domain\u0027s certificate is dropped; requesting it again starts verification over. Subscribers and analytics stay. This counts as an edit of the page, so a Copilot undo of an earlier change to it is refused afterwards. There is no undo. In Copilot the member confirms every time; over MCP no card is shown, so confirm with the person first.",
     "undoable": false
   },
   {
@@ -772,7 +796,7 @@
     "module": "bio_links",
     "risk": "ReversibleWrite",
     "scope": "biolinks:write",
-    "description": "Starts serving a bio page on the member's own domain. It returns the DNS records the member must add at their registrar; the domain works once they are in place.",
+    "description": "Starts serving a bio page on the member\u0027s own domain (Enterprise plan only, as in the app). It returns the DNS records the member must add at their registrar; get_custom_domain checks the status, and the domain serves the page once AVAILABLE. A page has one domain; remove_custom_domain releases it. This counts as an edit of the page, so a Copilot undo of an earlier change to it is refused afterwards. In Copilot it can be undone (the domain is released); over MCP there is no undo.",
     "undoable": true
   },
   {
@@ -780,7 +804,7 @@
     "module": "media",
     "risk": "ReversibleWrite",
     "scope": "media:write",
-    "description": "Makes an edited copy of a library file on the server: a centred crop to an aspect ratio, a video trim, or both. The original stays; the copy appears in the library when the render finishes.",
+    "description": "Makes an edited copy of a library VIDEO on the server with the renderer the app\u0027s media editor uses: a centred crop to an aspect ratio, a trim to one range of seconds, muting, and mirroring, in any combination. The editor\u0027s rotation, several trim ranges, volume levels, colour, resize and overlays are not offered here, and images cannot be edited this way (the renderer takes video only). The original stays; the copy is a new file filed in the original\u0027s collection (the editor leaves its copy outside the library) that starts Uploading and becomes Completed when the render finishes (get_media on mediaId). The result has the render\u0027s status, progress and, when it failed, errorCode and error; a video too large or too long for the renderer is refused with its code. In Copilot undo cancels a running render or removes the finished copy. Over MCP there is no card and no undo.",
     "undoable": true
   },
   {
@@ -788,7 +812,7 @@
     "module": "posts",
     "risk": "ReversibleWrite",
     "scope": "posts:write",
-    "description": "Moves a draft, scheduled or pending-approval post of the active social set to a new time. A draft keeps its status: it gets the time but stays a draft and does not publish until someone schedules it. Needs the member's confirmation unless they allowed rescheduling.",
+    "description": "Moves a draft, scheduled, pending-approval or processed post of the active social set to a new time in the future. A draft keeps its status: it gets the time but stays a draft and does not publish until someone schedules it; a processed post (media ready, waiting for its time) goes back to scheduled. In Copilot the member confirms unless they allowed rescheduling, and undo moves it back while the old time has not passed; over MCP there is no card and no undo.",
     "undoable": true
   },
   {
@@ -796,15 +820,15 @@
     "module": "posts",
     "risk": "AlwaysAsk",
     "scope": "posts:write",
-    "description": "Tries a failed post again right now. Read get_post (its error) or get_post_diagnostics first: retrying an expired channel or a rejected file fails again.",
+    "description": "Publishes a failed post again right now, as the app\u0027s Publish Now on a failed post does: the post is checked again with the save-time rules, its last error and delivery attempts are cleared, and a post.updated webhook is sent. Read get_post (its error) or get_post_diagnostics first: retrying an expired channel or a rejected file fails again. Irreversible once it succeeds. In Copilot the member confirms on a card every time; over MCP there is no card. The result has id, status (the raw status) and displayStatus.",
     "undoable": false
   },
   {
     "name": "rewrite_for_channel",
     "module": "ai",
     "risk": "Read",
-    "scope": "posts:read",
-    "description": "Rewrites a caption for another platform's length and style, for example a LinkedIn post into a Bluesky one under 300 characters.",
+    "scope": "posts:write",
+    "description": "Rewrites a caption for another platform\u0027s style with the composer\u0027s Rephrase, then checks it against that platform\u0027s standard caption limit (Bluesky 300, X 280, Threads and Mastodon 500, Pinterest 800, Google Business 1500, Instagram and TikTok videos 2200, LinkedIn 3000, Facebook and YouTube 5000), or the limit given, and shortens up to twice when it is over; fitsLimit says whether it fits. X is measured as X and validate_post measure it, every link 23 and most emoji 2 (weightedLength). That is up to three model calls (the rewrite and two shortenings). Returns text only. Over MCP the three model calls take one permit of the workspace\u0027s AI budget.",
     "undoable": false
   },
   {
@@ -812,7 +836,7 @@
     "module": "posts",
     "risk": "ReversibleWrite",
     "scope": "posts:write",
-    "description": "Schedules a post to publish by itself at a time, or in the channel's next queue slot: a new post, or an existing draft. It publishes without anyone pressing a button, so check it with validate_post first.",
+    "description": "Schedules a post to publish by itself at a time, or in the channel\u0027s next queue slot: a new post with everything the composer takes (text, media, title, categories, platform settings, approval, evergreen), or an existing draft or scheduled post by postId (a scheduled one moves to the new time). With useNextQueueSlot on a channel without posting slots a draft stays a draft and the result says so, and a scheduled post is refused, so it keeps its time. A new post counts against the plan\u0027s monthly post quota and is refused once the month is full. It publishes without anyone pressing a button, so check it with validate_post first. Undo deletes a post it created, or puts a post it scheduled back as it was, before it publishes; over MCP there is no card and no undo.",
     "undoable": true
   },
   {
@@ -820,7 +844,7 @@
     "module": "media",
     "risk": "Read",
     "scope": "media:read",
-    "description": "Searches every collection of the active social set's media library by file name, alt text or tag; at most 25 results.",
+    "description": "Searches every collection of the active social set\u0027s media library at once (the app searches one collection at a time) by file name or alt text, and by tags with the tags filter, with the library\u0027s type, favourite and uploader filters; finished files only, favourites first then newest unless sort or favoritesFirst say otherwise. Each file names its collection and who added it. hasMore and nextCursor page it.",
     "undoable": false
   },
   {
@@ -828,7 +852,15 @@
     "module": "posts",
     "risk": "Read",
     "scope": "posts:read",
-    "description": "Finds posts of the active social set by words in their text, newest first, among its latest 2,000 posts. Use it to find \"the post about the autumn guide\".",
+    "description": "Finds posts of the active social set by words in their text, newest first, among its latest 2,000 posts. Use it to find \u0022the post about the autumn guide\u0022.",
+    "undoable": false
+  },
+  {
+    "name": "search_unsplash",
+    "module": "media",
+    "risk": "Read",
+    "scope": "media:read",
+    "description": "Searches Unsplash\u0027s free photos as the app\u0027s import panel does: each photo has its photoId (for import_media with provider Unsplash), a description, width and height, thumbnail and preview links, and the photographer\u0027s name and profile link, which Unsplash asks to credit wherever the photo is shown. Nothing is imported or saved. Up to 120 searches a minute per workspace, as the app\u0027s import panel.",
     "undoable": false
   },
   {
@@ -836,7 +868,7 @@
     "module": "short_links",
     "risk": "ReversibleWrite",
     "scope": "url_shortener:write",
-    "description": "Chooses which shortener the workspace uses by default.",
+    "description": "Chooses which connected shortener the workspace makes links with by default, and for Bitly, Dub or Rebrandly the domain they are made on (get_shortener_settings shows the connected ones). A provider not connected in the app is refused. In Copilot it can be undone; over MCP there is no undo.",
     "undoable": true
   },
   {
@@ -844,15 +876,23 @@
     "module": "channels",
     "risk": "ReversibleWrite",
     "scope": "channels:write",
-    "description": "Replaces one channel's weekly posting slots. Queued posts move to the new slots as the app does when slots are edited.",
+    "description": "Replaces one channel\u0027s weekly posting slots, the times the queue fills, as the app\u0027s posting times editor saves them. Queued posts follow their slot only when the slot is sent with its id and a new time (they move to that time on the same date); a removed slot\u0027s queued posts keep their date, time and queued status (the app still lists them in the queue at that time) but no longer sit in a posting slot, which get_post shows as inPostingSlot false. generateSlotsPerDay replaces every slot with random best-time slots for the platform, as the app\u0027s Generate New Slots followed by Save does: every queued post keeps its time and leaves its slot; in Copilot the card shows the generated times and exactly those are saved. Up to 100 slots, times as HH:mm. The result says what moved and what lost its slot. In Copilot undo restores the old times of slots that still exist, re-adds removed ones (with new ids) and puts the queued posts that lost their slot back into the slot on their day and time; their times never change. Over MCP there is no card and no undo.",
     "undoable": true
+  },
+  {
+    "name": "stop_evergreen_schedule",
+    "module": "evergreen",
+    "risk": "AlwaysAsk",
+    "scope": "posts:write",
+    "description": "Stops an evergreen schedule for good, as the Recycled content page\u0027s Delete Schedule does (keeping the original post): the schedule is removed, every copy still scheduled or drafted (a paused schedule\u0027s copies too) is deleted, and the copies already published, failed, awaiting approval or being published stay as ordinary posts. The original post stays as it is; delete it separately with delete_scheduled_post or delete_draft. The result counts the copies deleted and kept. It cannot be undone; to hold the copies for a while, use pause_evergreen_schedule. In Copilot the member confirms every time; over MCP no card is shown, so confirm with the person first. A post with no schedule (one already stopped) answers not found.",
+    "undoable": false
   },
   {
     "name": "subscribe_feed",
     "module": "feeds",
     "risk": "ReversibleWrite",
     "scope": "feeds:write",
-    "description": "Follows an RSS or Atom feed in the active social set so its items appear in Feeds.",
+    "description": "Follows an RSS or Atom feed in the active social set so its items appear in Feeds, as the app\u0027s add dialog does: the feed is fetched and parsed first and refused when it cannot be read, and its items are fetched. It goes last in its collection. In Copilot undo stops following it again. Over MCP there is no card and no undo.",
     "undoable": true
   },
   {
@@ -860,7 +900,7 @@
     "module": "analytics",
     "risk": "ReversibleWrite",
     "scope": "analytics:read",
-    "description": "Asks the network for a channel's latest numbers now instead of waiting for the next scheduled fetch. It runs in the background for a few minutes.",
+    "description": "Asks the network for a channel\u0027s latest numbers now instead of waiting for the next scheduled fetch, as the app\u0027s refresh button does (same service call). It runs in the background for a few minutes; a refresh started in the last 30 minutes that has not finished is reported as still running and not started again. Unlike the app\u0027s button, which stays disabled while a refresh is marked running, a refresh marked running for more than 30 minutes is taken as stuck and started again. Returns when the refresh started and when the numbers were last fetched.",
     "undoable": false
   },
   {
@@ -868,7 +908,7 @@
     "module": "feeds",
     "risk": "ReversibleWrite",
     "scope": "feeds:write",
-    "description": "Stops following a feed and removes its items. Undo follows it again; read states start over.",
+    "description": "Stops following a feed and deletes its items with their read and used states, as the app\u0027s delete does. In Copilot undo follows it again with its name, description and collection, last in that collection and Active, and its items are fetched afresh with their states starting over. Over MCP there is no card and no undo, so the feed and its items are gone for good.",
     "undoable": true
   },
   {
@@ -876,7 +916,7 @@
     "module": "media",
     "risk": "ReversibleWrite",
     "scope": "media:write",
-    "description": "Sets a library file's alt text, which posts carry to the networks that support it. generate_alt_text drafts one.",
+    "description": "Sets a library file\u0027s alt text (its notes in the library, shown in the app\u0027s file view). Posts carry their own alt text per file, and that is what reaches the networks: give postId to set it on a draft or scheduled post that carries the file, saved the way the composer saves the post (its post.updated webhook fires). On a post it is held to the composer\u0027s limit for the post\u0027s platform (the composer shows the count and warns; this tool refuses a text over it) and to the files the composer offers alt text for: photos on Facebook, Instagram, X, LinkedIn and Bluesky photo posts (not on a Reel, a story, a video, GIF, text or document post), the first file of a pin, photos and videos on Mastodon and Threads, nothing on TikTok, YouTube or Google Business; any other file is refused with the rule. Without postId no post changes, and the library keeps up to 500 characters, so a longer text without postId is refused; with postId a text over 500 is set on the post only. The result has the stored text, the platform\u0027s limit and whether the library text was set. In Copilot undo puts the old texts back while the post can still be edited. generate_alt_text drafts the text. Over MCP there is no card and no undo.",
     "undoable": true
   },
   {
@@ -884,7 +924,7 @@
     "module": "bio_links",
     "risk": "ReversibleWrite",
     "scope": "biolinks:write",
-    "description": "Changes a bio page's profile name, bio or URL slug. Design and other sections are edited in the app.",
+    "description": "Changes a bio page\u0027s profile (name, bio, picture), URL slug, design (a Design tab theme, colours, fonts, buttons, background), branding, auto-add limit, tracking pixels, contact card, email integration or branded tip colours; what is not given stays. The editor\u0027s plan rules apply to what changes: a new slug, pixels and the email form need Influencer (below it the form\u0027s integration cannot be changed, only detached), hiding the branding needs Business; a page that already has them from an earlier plan keeps them. The result lists each change with its value before (a dash when there was none). In Copilot it can be undone until the page is edited again, unless the plan no longer allows what the undo would put back; over MCP there is no undo. Blocks are changed with add_block, update_block and remove_block; the email form\u0027s texts and the auto-add channel settings are edited in the app.",
     "undoable": true
   },
   {
@@ -892,7 +932,7 @@
     "module": "bio_links",
     "risk": "ReversibleWrite",
     "scope": "biolinks:write",
-    "description": "Changes a link button's text or URL, or a social icon's URL, on a bio page.",
+    "description": "Changes an item of a bio page (a link, social icon, video, grid tile, tip button, product or RSS feed): its text, URL, image, colour, platform, product or feed fields, or its position in its list. What is not given stays; the result lists each change with its value before. Sections cannot be reordered here. In Copilot it can be undone until the page is edited again, unless the plan no longer allows what the undo would put back; over MCP there is no undo.",
     "undoable": true
   },
   {
@@ -900,7 +940,7 @@
     "module": "categories",
     "risk": "ReversibleWrite",
     "scope": "categories:write",
-    "description": "Renames or recolours a post category.",
+    "description": "Renames or recolours a post category of the workspace; posts and ideas keep it. In Copilot undo puts the old name and colour back. Over MCP there is no card and no undo.",
     "undoable": true
   },
   {
@@ -908,7 +948,7 @@
     "module": "evergreen",
     "risk": "ReversibleWrite",
     "scope": "posts:write",
-    "description": "Changes how often an evergreen post recycles and when it stops.",
+    "description": "Changes an evergreen schedule as the Recycled content page\u0027s edit dialog does: the interval or the copy times, the limit or end date, the caption variations. What is omitted stays as it is. Copies are made only when the interval or the copy times change: then the scheduled and drafted copies with a future time are deleted and made again from the post\u0027s own time, and the count so far starts over (copies awaiting approval or being published stay, outside the new series). On a paused schedule the new copies are drafts and it stays paused: nothing publishes until a resume. A lower limit deletes the latest copies not yet published beyond it (published copies are not counted against it); a higher limit, a later end date or removeLimit adds no copies, and the result\u0027s note says so. In Copilot undo puts the settings back, but copies a lower limit deleted are not made again and an interval change is undone by making the copies again; over MCP there is no card and no undo. To end the schedule, use stop_evergreen_schedule.",
     "undoable": true
   },
   {
@@ -916,7 +956,7 @@
     "module": "hashtags",
     "risk": "ReversibleWrite",
     "scope": "hashtags:write",
-    "description": "Changes a saved hashtag list's topic or hashtags.",
+    "description": "Changes a saved hashtag list\u0027s topic or replaces its hashtags; what is omitted stays. The result has the stored text. In Copilot undo puts the old topic and hashtags back. Over MCP there is no card and no undo.",
     "undoable": true
   },
   {
@@ -924,7 +964,7 @@
     "module": "ideas",
     "risk": "ReversibleWrite",
     "scope": "ideas:write",
-    "description": "Changes an idea's title, caption, notes, status or date.",
+    "description": "Changes an idea\u0027s title, caption, notes, link, status, planned date, board, media, tags or position; what is not given stays, and clear removes a caption, notes, link or date. Saving the idea from the app\u0027s modal keeps its notes and link. With boardId the idea moves, as the app\u0027s board view moves it: a move between boards changes only the board, so its date, text, media, tags, status and position stay unless given here too. The result lists the media added, removed and kept. In Copilot undo puts the idea back as it was, unless one of its earlier files has been removed from the library since. Over MCP there is no card and no undo.",
     "undoable": true
   },
   {
@@ -932,7 +972,7 @@
     "module": "posts",
     "risk": "ReversibleWrite",
     "scope": "posts:write",
-    "description": "Changes the text, media or placement of a draft or scheduled post. It keeps its status and time; use reschedule_post for the time.",
+    "description": "Changes a draft or scheduled post: text, media and alt text, placement, title, categories, platform settings (config), approval, evergreen. What is omitted stays, the approval record included. It keeps its status and time, except that an approvalRequest makes it wait for approval; use reschedule_post for the time. Refused for a post waiting for approval, publishing, published or failed, and for a scheduled post whose time has passed. Undo puts the old content back while its time has not passed; over MCP there is no card and no undo.",
     "undoable": true
   },
   {
@@ -940,7 +980,7 @@
     "module": "social_sets",
     "risk": "ReversibleWrite",
     "scope": "social_sets:write",
-    "description": "Renames the active social set or changes its timezone.",
+    "description": "Changes the active social set\u0027s name, timezone, colour or code, with the app\u0027s checks. A timezone change re-times every post with a future time that is scheduled, awaiting approval or being published so it keeps its local wall-clock time in the new zone (the moment it publishes changes); drafts keep their placeholder time; the result says how many moved. In Copilot undo puts the old values back the same way; over MCP there is no card and no undo.",
     "undoable": true
   },
   {
@@ -948,7 +988,7 @@
     "module": "workspace",
     "risk": "ReversibleWrite",
     "scope": "social_sets:write",
-    "description": "Replaces the brief Copilot reads on every request (brand voice, audience, rules), for the whole workspace or this social set only. Show the member the new text; it replaces the old one.",
+    "description": "Replaces the brief Copilot reads on every request (brand voice, audience, rules), for the whole workspace or this social set only, up to 8,000 characters; empty removes it. A social set\u0027s own brief shadows the workspace\u0027s for that set. Show the member the new text; it replaces the old one. Through an API connection no member is recorded as its author; the call names a social set there too, and forThisSocialSetOnly still decides between that set\u0027s own brief and the workspace\u0027s.",
     "undoable": true
   },
   {
@@ -956,7 +996,7 @@
     "module": "media",
     "risk": "ReversibleWrite",
     "scope": "media:write",
-    "description": "Adds a file to the active social set's media library from a public link. The server downloads and measures it; the result says when it is ready to post.",
+    "description": "Adds a file to the active social set\u0027s media library from a public link straight to an image or video: the server downloads and measures it while the call waits, then files it in the collection (the app\u0027s library imports a link in the background instead; import_media does it that way). A download that fails, breaks off or is refused leaves no file. A photo comes back Completed (ready to post) within a few seconds; a video comes back Uploading or Processing and get_media says when it is ready. Each call adds a new file, also for a link added before; only a retry of the same tool call returns the first file. Alt text over 500 characters or a name over 255 is refused before anything is downloaded. In Copilot undo removes the file once it is no longer uploading or processing. Over MCP a retry is a request with the same Idempotency-Key header, which returns the first file; the same key with other arguments is refused (409). Over MCP there is no card and no undo.",
     "undoable": true
   },
   {
@@ -964,7 +1004,7 @@
     "module": "posts",
     "risk": "Read",
     "scope": "posts:read",
-    "description": "Checks a post before it is saved or scheduled, with the same rules the app enforces: caption length, media formats, sizes, counts and aspect ratios per platform, plus a channel that cannot publish, a time in the past and the same text already on the channel. Returns each problem; saves nothing.",
+    "description": "Checks a post before it is saved or scheduled, with the rules the server applies on save to the settings as they would be stored (caption and title lengths, first comment, board, privacy, media formats, sizes, counts and aspect ratios per platform), plus a channel that cannot publish, a time in the past, the same text already on the channel and, for a new post (no postId), the monthly post quota the save applies. An existing post is judged on its stored settings with the given fields laid over them. Returns each problem; saves nothing.",
     "undoable": false
   }
 ]
