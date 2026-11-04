@@ -4,15 +4,7 @@
     "module": "bio_links",
     "risk": "ReversibleWrite",
     "scope": "biolinks:write",
-    "description": "Adds a link button or a social icon to a bio page. Other sections (media, products, tipping, forms) are added in the editor.",
-    "undoable": true
-  },
-  {
-    "name": "add_post_comment",
-    "module": "approvals",
-    "risk": "ReversibleWrite",
-    "scope": "posts:write",
-    "description": "Adds an internal team comment to a post, as in the post's comment thread. The network never sees it.",
+    "description": "Adds an item to a bio page: a link button, a social icon, a featured video, a grid tile, a tip button, a product or an RSS feed, with the fields the editor has for it. Its section is added to the page after the existing ones when it is new. The email form, the auto-add posts section and the contact card are set with update_bio_page or in the editor.",
     "undoable": true
   },
   {
@@ -20,7 +12,7 @@
     "module": "categories",
     "risk": "ReversibleWrite",
     "scope": "categories:write",
-    "description": "Adds categories to posts of the active social set, or removes them.",
+    "description": "Adds categories to posts of the active social set, or removes them. A post that already has (or lacks) a category is left as it is; the result lists what changed, and undo reverses only that.",
     "undoable": true
   },
   {
@@ -44,7 +36,7 @@
     "module": "analytics",
     "risk": "Read",
     "scope": "analytics:read",
-    "description": "Compares two date ranges of published posts in the active social set, or one channel: posts, engagement, reach, views and the change in percent. Use it for \"this month against last month\".",
+    "description": "Compares two date ranges of published posts in the active social set, one channel or one platform, over every post of each range: posts, the app\u0027s universal totals (engagement = likes \u002B comments \u002B shares \u002B clicks, impressions, reach, likes, comments, shares, clicks, video views) and the change in percent from the first to the second. Only posts with collected metrics count; YouTube posts carry no engagement. Use it for \u0022this month against last month\u0022.",
     "undoable": false
   },
   {
@@ -52,7 +44,7 @@
     "module": "bio_links",
     "risk": "ReversibleWrite",
     "scope": "biolinks:write",
-    "description": "Creates a link-in-bio page in the active social set with a profile name and bio; links are added with add_block. The page is public at its URL once created.",
+    "description": "Creates a link-in-bio page in the active social set, as the app\u0027s editor would: profile name and bio, the design (a preset or its own colours, fonts and buttons; the app\u0027s default when omitted), profile picture, branding, and optionally the first links and social icons; more blocks with add_block. The page is public at its URL as soon as it exists; the plan\u0027s page limit applies.",
     "undoable": true
   },
   {
@@ -68,7 +60,7 @@
     "module": "media",
     "risk": "ReversibleWrite",
     "scope": "media:write",
-    "description": "Creates a media library collection (folder) in the active social set.",
+    "description": "Creates a media library collection (folder) in the active social set. It becomes the first collection, as in the app.",
     "undoable": true
   },
   {
@@ -76,7 +68,7 @@
     "module": "inbox",
     "risk": "AlwaysAsk",
     "scope": "comment_rules:write",
-    "description": "Creates a comment rule on a post of the active social set: when a new comment matches the conditions, the inbox replies publicly, sends a DM to the commenter, or hides the comment, with fixed texts or an optional model step. Replies go out without anyone pressing a button, so the member confirms every time. Needs the Influencer plan or higher and a channel whose inbox can reply.",
+    "description": "Creates a comment rule on a post of the active social set: when a new comment matches the conditions, the inbox replies publicly, sends a DM to the commenter, or hides the comment, with fixed texts or an optional model step; exclusions say which comments it leaves alone. Replies go out without anyone pressing a button, so the member confirms every time. Needs the Influencer plan or higher and a platform whose inbox can reply (the post\u0027s channel must have its inbox switched on for comments to arrive).",
     "undoable": false
   },
   {
@@ -84,7 +76,7 @@
     "module": "posts",
     "risk": "ReversibleWrite",
     "scope": "posts:write",
-    "description": "Saves a draft on one channel of the active social set. A draft publishes nothing; it waits in the app until someone schedules it. Needs the member's confirmation unless they allowed drafts.",
+    "description": "Saves a draft on one channel of the active social set, with everything the composer takes: text, media, title, categories, platform settings (config), an approval request, evergreen. A draft publishes nothing; it waits in the app until someone schedules it. Needs the member\u0027s confirmation unless they allowed drafts.",
     "undoable": true
   },
   {
@@ -92,7 +84,7 @@
     "module": "feeds",
     "risk": "ReversibleWrite",
     "scope": "posts:write",
-    "description": "Drafts a post sharing a feed item on a channel, with its link, and marks the item used.",
+    "description": "Drafts a post sharing a feed item on a channel, prefilled as the app\u0027s Create post does (title, summary and link; no image), and marks the item used unless told not to.",
     "undoable": true
   },
   {
@@ -100,7 +92,7 @@
     "module": "ideas",
     "risk": "ReversibleWrite",
     "scope": "posts:write",
-    "description": "Turns an idea into a draft on a channel: its caption (or title) and media, with the link appended. The idea is marked Scheduled as in the app.",
+    "description": "Turns an idea into a draft on a channel as the app\u0027s composer does: the idea\u0027s caption as the text (its title when the caption is empty), its title as the post title and the Pinterest, YouTube, TikTok or LinkedIn document title, its tags as the post\u0027s categories, and its media attached. The idea is marked Scheduled, as in the app.",
     "undoable": true
   },
   {
@@ -108,7 +100,7 @@
     "module": "evergreen",
     "risk": "ReversibleWrite",
     "scope": "posts:write",
-    "description": "Makes a post evergreen: Viraly schedules a copy of it every so many days, until a count or a date.",
+    "description": "Makes a post evergreen, as the composer\u0027s Recycle does: Viraly schedules copies of it every so many days from the post\u0027s own time (or at chosen times), until a count or an end date, rotating the caption variations. The copies are generated at once and publish by themselves; nothing extends the series later. Not for YouTube or TikTok posts (the app skips them) or for a recycled copy. A post that is already evergreen is changed with update_evergreen_schedule.",
     "undoable": true
   },
   {
@@ -124,7 +116,7 @@
     "module": "ideas",
     "risk": "ReversibleWrite",
     "scope": "ideas:write",
-    "description": "Saves an idea on a board of the active social set.",
+    "description": "Saves an idea on a board of the active social set, with its text, planned date, media and tags, at the top of the board as the app does.",
     "undoable": true
   },
   {
@@ -132,7 +124,7 @@
     "module": "short_links",
     "risk": "ReversibleWrite",
     "scope": "url_shortener:write",
-    "description": "Shortens a URL with the workspace's default shortener; the result says if it fell back to Viraly's own.",
+    "description": "Shortens a URL with the workspace\u0027s default shortener (or the one given) and returns the short URL to put in a caption. A link not used in a post is switched off 24 hours later: pass its id as shortenedUrlIds to create_draft, schedule_post or update_post, or give postId here. An existing active link for the same URL is returned instead of a new one (reused: true) and cannot be undone away.",
     "undoable": true
   },
   {
@@ -140,7 +132,7 @@
     "module": "social_sets",
     "risk": "ReversibleWrite",
     "scope": "social_sets:write",
-    "description": "Creates a new, empty social set (a brand or client with its own channels, calendar and timezone). Channels are connected to it in the app afterwards.",
+    "description": "Creates a new, empty social set (a brand or client with its own channels, calendar and timezone) with the same checks as the app\u0027s form. Channels are connected to it in the app afterwards.",
     "undoable": true
   },
   {
@@ -160,11 +152,19 @@
     "undoable": false
   },
   {
+    "name": "delete_comment_rule",
+    "module": "inbox",
+    "risk": "AlwaysAsk",
+    "scope": "comment_rules:write",
+    "description": "Deletes a comment rule of the active social set, as the app\u0027s DELETE does: it stops replying at once and its activity log stays. Irreversible; the member confirms every time. To stop a rule for a while, use pause_comment_rule.",
+    "undoable": false
+  },
+  {
     "name": "delete_draft",
     "module": "posts",
     "risk": "ReversibleWrite",
     "scope": "posts:write",
-    "description": "Deletes a draft. Undo brings it back as a new draft with the same text, media and time.",
+    "description": "Deletes a draft. Undo brings it back as a new draft with the same text, title, media and alt text, categories, platform settings and time.",
     "undoable": true
   },
   {
@@ -180,7 +180,7 @@
     "module": "ideas",
     "risk": "ReversibleWrite",
     "scope": "ideas:write",
-    "description": "Deletes an idea. Undo saves it again on its board with the same text.",
+    "description": "Deletes an idea. Undo saves it again on its board with its text, date, media, tags, status and position, under a new id (the app has no undo; the idea.created webhook fires again).",
     "undoable": true
   },
   {
@@ -188,7 +188,7 @@
     "module": "media",
     "risk": "AlwaysAsk",
     "scope": "media:write",
-    "description": "Removes a file from the media library. Posts that already carry it keep it. The member confirms every time.",
+    "description": "Deletes a file from the media library and its storage. Refused while the file is used by a post (remove it from those posts first) and while it is still uploading or processing. The member confirms every time.",
     "undoable": false
   },
   {
@@ -204,7 +204,7 @@
     "module": "short_links",
     "risk": "AlwaysAsk",
     "scope": "url_shortener:write",
-    "description": "Deletes a short link. Anyone who opens it afterwards gets nothing, including in posts already published. The member confirms every time.",
+    "description": "Deletes a short link from Viraly with its click history and post associations. A Viraly link stops resolving, including in posts already published; a Bitly, Dub or Rebrandly link keeps resolving at the provider. The member confirms every time.",
     "undoable": false
   },
   {
@@ -212,7 +212,7 @@
     "module": "social_sets",
     "risk": "AlwaysAsk",
     "scope": "social_sets:write",
-    "description": "Deletes a social set with all its channels, posts and inbox history. Irreversible; the member confirms on a card every time.",
+    "description": "Deletes a social set with all its channels, every post (published history and analytics included) and inbox history, as the app\u0027s list does: YouTube access is revoked, the workspace\u0027s webhooks hear each channel disconnect, and channels locked by the plan\u0027s limit are re-evaluated. A workspace keeps at least one social set, so the last one is refused. Irreversible; the member confirms on a card every time.",
     "undoable": false
   },
   {
@@ -220,7 +220,7 @@
     "module": "channels",
     "risk": "AlwaysAsk",
     "scope": "channels:write",
-    "description": "Disconnects a channel from Viraly: its scheduled posts and inbox history are removed. Irreversible; the member confirms on a card every time.",
+    "description": "Disconnects a channel from Viraly and deletes everything Viraly holds for it: every post including the published history and its analytics, comments and approvals, and its inbox conversations. Nothing is removed on the network itself. Irreversible; the member confirms on a card every time.",
     "undoable": false
   },
   {
@@ -228,7 +228,7 @@
     "module": "posts",
     "risk": "ReversibleWrite",
     "scope": "posts:write",
-    "description": "Copies a post's text and media into a new draft, on the same channel or another. Works for published and failed posts too.",
+    "description": "Copies a post into a new draft on the same channel or another: its text, title, media with alt text, categories and platform settings; on another platform the settings are rebuilt from the text. Anything given here replaces what is copied. Works for published and failed posts too.",
     "undoable": true
   },
   {
@@ -236,7 +236,7 @@
     "module": "analytics",
     "risk": "Read",
     "scope": "analytics:read",
-    "description": "Post metrics of a date range as CSV text, one row per published post, up to 100 rows. Hand it to download_file for a file.",
+    "description": "One channel\u0027s post metrics of a date range as CSV text with the app\u0027s export columns (ID, External ID, Published At in the set\u0027s timezone, Content, Post URL, Image URL, then the platform\u0027s metric columns), oldest first. Returns the text of up to 100 rows, the total and whether it stopped short; it makes no file, and the PDF report exists only in the app. Needs the Influencer plan or above, as the app\u0027s export does.",
     "undoable": false
   },
   {
@@ -244,7 +244,7 @@
     "module": "posts",
     "risk": "Read",
     "scope": "posts:read",
-    "description": "The posts of a date range as CSV text (date, channel, status, title, link), up to 100 rows. Hand the text to download_file to give the member a file.",
+    "description": "The posts of a date range as CSV text with the app\u0027s export columns (Title, Scheduled At, Status, Channel, Platform, Post URL, Image URL, Created By), by scheduled time. Returns the text of up to 100 rows, the total and whether it stopped short; it makes no file, and a PDF or an emailed export exists only in the app. Needs the Influencer plan or above, as the app\u0027s export does.",
     "undoable": false
   },
   {
@@ -252,7 +252,7 @@
     "module": "bio_links",
     "risk": "Read",
     "scope": "subscribers:read",
-    "description": "A bio page's subscribers as CSV text (name, email, phone, date), up to 100 rows. Hand it to download_file for a file.",
+    "description": "A bio page\u0027s subscribers as CSV text with the app\u0027s columns (Email, Name, Phone, Subscribed On), newest first, with the app\u0027s search and date filters; up to maxRows rows (default 1,000) and truncated when more exist. Returns text, not a file. Needs the Influencer plan or above, as the app\u0027s export does.",
     "undoable": false
   },
   {
@@ -260,63 +260,63 @@
     "module": "posts",
     "risk": "Read",
     "scope": "posts:read",
-    "description": "The empty posting slots of the active social set's channels in a date range, earliest first: each with channel and local time. A slot is empty when no scheduled post sits in it. Use it for \"fill the empty slots next week\".",
+    "description": "The empty posting slots of the active social set\u0027s channels in a date range, earliest first: each with channel and local time. A slot is empty when no post at all sits at its time on that channel (a queued draft takes it, as in the app\u0027s queue and the queue placement); truncated says when more existed than limit. Channels without slots and channels that cannot publish are named. Use it for \u0022fill the empty slots next week\u0022.",
     "undoable": false
   },
   {
     "name": "generate_alt_text",
     "module": "ai",
     "risk": "Read",
-    "scope": "media:read",
-    "description": "Looks at an image in the media library and drafts alt text for it. Returns text; update_alt_text saves it.",
+    "scope": "posts:write",
+    "description": "Looks at an image in the media library (a video\u0027s poster for a video) and drafts alt text for it within the platform\u0027s composer limit, in a language, shortening up to twice when the draft is over; fitsLimit says whether it fits. Returns text; update_alt_text with the postId saves it on the post, where the networks read it.",
     "undoable": false
   },
   {
     "name": "generate_caption",
     "module": "ai",
     "risk": "Read",
-    "scope": "posts:read",
-    "description": "Writes or reworks a caption with the composer's AI assistant: new from a topic, or rephrased, shortened, expanded, more casual or more formal. Returns text only; nothing is saved.",
+    "scope": "posts:write",
+    "description": "Writes or reworks a caption with the composer\u0027s AI assistant: new from a topic, or rephrased, shortened, expanded, more casual or more formal, in a tone, for a platform. Returns text only; nothing is saved. No hashtags are written (generate_hashtags does that).",
     "undoable": false
   },
   {
     "name": "generate_hashtags",
     "module": "hashtags",
     "risk": "Read",
-    "scope": "hashtags:read",
-    "description": "Suggests hashtags for a post with the composer's hashtag generator. Returns text only.",
+    "scope": "posts:write",
+    "description": "Suggests hashtags for a topic with the composer\u0027s hashtag generator (its field takes up to 512 characters): the tags as a list, plus the generator\u0027s own text with its groupings. Nothing is saved.",
     "undoable": false
   },
   {
     "name": "generate_ideas",
     "module": "ideas",
     "risk": "Read",
-    "scope": "ideas:read",
-    "description": "Suggests post ideas for a business and audience with the app's idea generator. Returns text; create_idea saves the ones the member likes.",
+    "scope": "posts:write",
+    "description": "Suggests one post idea (two to four sentences) for a business and audience with the app\u0027s idea generator; call it again for another. Returns text; create_idea saves the ones the member likes.",
     "undoable": false
   },
   {
     "name": "generate_image",
     "module": "ai",
     "risk": "ReversibleWrite",
-    "scope": "media:write",
-    "description": "Generates an image with the app's image model and saves it to the media library. It counts against the plan's monthly image allowance, so the member confirms it.",
+    "scope": "posts:write",
+    "description": "Generates an image with the app\u0027s image model and saves it in the active social set\u0027s media library (list_media, get_media and the post tools\u0027 mediaIds see it). It counts against the plan\u0027s monthly image allowance, so the member confirms it; deleting the image afterwards does not give the allowance back. In the app the call returns the image (about a minute). Through an API connection it returns a job at once instead, because the generation outlasts the connection\u0027s timeout: resolve it with get_image_generation.",
     "undoable": true
   },
   {
     "name": "generate_link_title",
     "module": "ai",
     "risk": "Read",
-    "scope": "posts:read",
-    "description": "Writes a short headline for a link preview or a bio link button.",
+    "scope": "posts:write",
+    "description": "Writes a short headline (3 to 8 words) for a bio link button, from a caption, an image, or both, with the generator the bio link\u0027s automatic titles use. Returns text only.",
     "undoable": false
   },
   {
     "name": "generate_variations",
     "module": "ai",
     "risk": "Read",
-    "scope": "posts:read",
-    "description": "Writes alternative versions of a caption, for A/B tests or for posting the same news on several days.",
+    "scope": "posts:write",
+    "description": "Writes alternative versions of a caption with the composer\u0027s variation generator (their native home is a post\u0027s evergreenSettings.variations; also A/B tests or the same news on several days). Returns text only.",
     "undoable": false
   },
   {
@@ -324,7 +324,7 @@
     "module": "analytics",
     "risk": "Read",
     "scope": "analytics:read",
-    "description": "When the active social set's published posts did best: average engagement by weekday and by local hour over a look-back window, with how many posts each figure rests on.",
+    "description": "When the active social set\u0027s published posts did best: the average engagement rate (or engagement) by weekday, by local hour and by weekday and three-hour window over every post of the window, with how many posts each figure rests on. Posts without impressions have no rate; YouTube posts are left out (not YouTube\u0027s own figures). A hint, not a rule: set_posting_slots sets the slots.",
     "undoable": false
   },
   {
@@ -332,7 +332,7 @@
     "module": "bio_links",
     "risk": "Read",
     "scope": "biolinks:read",
-    "description": "A bio page's traffic over a period: views, unique visitors, clicks, click-through rate, bounce rate, and its most clicked links.",
+    "description": "A bio page\u0027s traffic over a period, the numbers of the app\u0027s analytics tab: overview (views, unique visitors, clicks, click-through rate, sessions, average session length, bounce rate, scroll depth), every link\u0027s clicks and click-through rate, the daily series, countries and cities, devices, browsers, referrers and UTM campaigns, and activity by hour and weekday.",
     "undoable": false
   },
   {
@@ -340,7 +340,7 @@
     "module": "bio_links",
     "risk": "Read",
     "scope": "biolinks:read",
-    "description": "One bio page: its profile title and bio, its sections, its links (with ids for update_block and remove_block) and its social links.",
+    "description": "One bio page as the editor shows it: URL and domain, profile (title, bio, image), theme, sections in order, every content list with item ids for update_block and remove_block (links, social icons, media, grid, tipping, products, RSS feeds), the email form and its integration, pixels, settings, contact card, auto-add limit and linked channels.",
     "undoable": false
   },
   {
@@ -348,7 +348,7 @@
     "module": "posts",
     "risk": "Read",
     "scope": "posts:read",
-    "description": "The calendar of the active social set for a date range: every post per day with its local time, channel, status and caption start. Use it to see what is planned or where the gaps are.",
+    "description": "The calendar of the active social set for a date range: per day, up to 40 posts with id, local time, channel, status, caption start, title, public link, error, media count, categories and the evergreen flag; a day with more says truncated with its total. Use it to see what is planned or where the gaps are.",
     "undoable": false
   },
   {
@@ -356,7 +356,7 @@
     "module": "analytics",
     "risk": "Read",
     "scope": "analytics:read",
-    "description": "How each post category performed in the active social set over a date range: posts, reach, impressions, engagement and engagement rate per category, for comparing content pillars.",
+    "description": "How post categories performed in the active social set over a date range, with the app\u0027s category analytics: per category (or combined) the posts, the universal totals (impressions, reach, likes, comments, shares, clicks, video views, engagement = likes \u002B comments \u002B shares \u002B clicks, engagement rate) and the breakdown per platform. Engagement is null where only YouTube contributes. Unknown category ids are listed, not fatal.",
     "undoable": false
   },
   {
@@ -364,7 +364,7 @@
     "module": "channels",
     "risk": "Read",
     "scope": "channels:read",
-    "description": "One channel in detail: platform, account type, status and why (an expired token, a locked channel over the plan's limit), when its token was last refreshed, its posting slots and how many posts it has.",
+    "description": "One channel in detail, as the app\u0027s channel card shows it: platform, account type, username, status and why (an expired token with the network\u0027s message, a locked channel over the plan\u0027s limit), who connected it, the permissions it granted, when its token was last and is next refreshed, when analytics were last and are next fetched, its posting slots with their ids, and how many posts it has. For an X account also the subscription type and the caption limit that applies (280 weighted characters, or 25,000 for Premium on a paid plan).",
     "undoable": false
   },
   {
@@ -372,7 +372,7 @@
     "module": "analytics",
     "risk": "Read",
     "scope": "analytics:read",
-    "description": "A channel's performance in a date range: the posts published and their summed metrics on every platform, plus the account's own numbers (followers, reach, engagement) with the previous period of equal length on Facebook and Instagram.",
+    "description": "A channel\u0027s performance in a date range: every published post of the range summed with the app\u0027s universal metrics, plus the account\u0027s own numbers as the app\u0027s analytics page shows them: Facebook and Instagram with the previous period (reach, views, engaged accounts, follows, Instagram followers), LinkedIn follower gains and page views, YouTube channel totals (views, watch time, subscribers), Threads totals and followers, the Pinterest account report, and the TikTok, X, Bluesky and Mastodon follower counts. A network that does not answer leaves accountError set and the post totals stand. A start date before the plan\u0027s analytics retention is moved up to it.",
     "undoable": false
   },
   {
@@ -380,7 +380,7 @@
     "module": "inbox",
     "risk": "Read",
     "scope": "comment_rules:read",
-    "description": "What a comment rule, or a post's rules, did: totals by status and skip reason, and the recent replies, DMs and hides with the text we sent. Commenters' own text is not included.",
+    "description": "What a comment rule, or a post\u0027s rules, did: totals by status and skip reason, and the recent replies, DMs and hides with the text we sent. Commenters\u0027 own text is not included.",
     "undoable": false
   },
   {
@@ -388,7 +388,7 @@
     "module": "bio_links",
     "risk": "Read",
     "scope": "biolinks:read",
-    "description": "A bio page's custom domain and its DNS status, with the records the member still has to add at their domain registrar.",
+    "description": "A bio page\u0027s custom domain and its live status (checked with the hosting now unless it is already AVAILABLE), with the DNS records the member still has to add at their registrar. Statuses: CREATING, REQUESTING_CERTIFICATE, PENDING_VERIFICATION, PENDING_DEPLOYMENT, AVAILABLE, FAILED.",
     "undoable": false
   },
   {
@@ -400,11 +400,19 @@
     "undoable": false
   },
   {
+    "name": "get_image_generation",
+    "module": "ai",
+    "risk": "Read",
+    "scope": "media:read",
+    "description": "The state of an image generation started by generate_image: Pending, Running, Succeeded with the mediaId of the image in the media library, or Failed with the reason. Nothing is charged for a failed one.",
+    "undoable": false
+  },
+  {
     "name": "get_media",
     "module": "media",
     "risk": "Read",
     "scope": "media:read",
-    "description": "One file of the media library: type, status, size, duration, alt text, tags and collection.",
+    "description": "One file of the media library, any status, as the app\u0027s file view shows it: type, status, name, width and height, duration, size, urls, alt text, tags, collection, who added it and when, the source, and the error of a file that failed. Resolves a file that upload_media_from_url, import_media, request_media_render or generate_image made.",
     "undoable": false
   },
   {
@@ -412,7 +420,7 @@
     "module": "channels",
     "risk": "Read",
     "scope": "channels:read",
-    "description": "Each platform's rules for media and text: formats, file sizes, aspect ratios, video lengths, how many files, caption length and hashtag limits. Check them before drafting; validate_post checks a concrete post.",
+    "description": "Each platform\u0027s rules for media and text as the app\u0027s composer and the server\u0027s validator apply them: formats, file sizes, aspect ratios, resolutions, video lengths, how many files, caption, title, first-comment and hashtag limits, thumbnails. Check them before drafting; validate_post checks a concrete post.",
     "undoable": false
   },
   {
@@ -420,7 +428,7 @@
     "module": "posts",
     "risk": "Read",
     "scope": "posts:read",
-    "description": "One post of the active social set: the full caption, channel, status, local scheduled time, public link, last error and summary metrics.",
+    "description": "One post of the active social set as the app reads it: the text (on X, Threads, Bluesky and Mastodon the first post of the thread; config holds the rest), title, channel, status, local scheduled time, public link, the stored config (the platform settings nested as the composer sends them: title, first comment, board, privacy, thread posts), the attachments with alt text and order, categories, approval state, evergreen flags, the last error with its reason and hint, and summary metrics. queued is the app\u0027s flag (the status is scheduled or on the way to publishing); inPostingSlot says whether the post sits in one of the channel\u0027s posting slots (a post whose slot was removed stays queued at its time with inPostingSlot false). Hand config back to update_post as config to change a setting.",
     "undoable": false
   },
   {
@@ -428,7 +436,7 @@
     "module": "analytics",
     "risk": "Read",
     "scope": "analytics:read",
-    "description": "What one post of the active social set did: reach, impressions, views, likes, comments, shares, saves, clicks and when the numbers were last updated.",
+    "description": "What one post of the active social set did: the flattened metrics (reach, impressions, views, likes, comments, shares, saves, clicks; null where the platform reports none), the network\u0027s own metric object as the app\u0027s post view shows it, the link to the live post, and when the numbers were last updated. Engagement is null for YouTube (not a YouTube figure).",
     "undoable": false
   },
   {
@@ -436,7 +444,7 @@
     "module": "posts",
     "risk": "Read",
     "scope": "posts:read",
-    "description": "Why a post failed or is stuck: the network's error with its reason and hint, the channel's state, and what usually fixes it.",
+    "description": "Why a post failed or is stuck: the network\u0027s error with its reason and hint, the channel\u0027s state, whether the post\u0027s time has passed while it still waits to publish, the problems the save-time rules find on its stored settings now, and what usually fixes it.",
     "undoable": false
   },
   {
@@ -444,7 +452,7 @@
     "module": "analytics",
     "risk": "Read",
     "scope": "analytics:read",
-    "description": "The published posts of one channel since a date with their metrics, newest first or ranked by engagement, reach or views.",
+    "description": "The published posts of one channel in a date range with their metrics, as the app\u0027s posts table lists them: newest first, sorted by any of the platform\u0027s own metrics, or ranked over the whole range by engagement, reach or views; paged, with the total, the flattened and the native metrics, the post type and thumbnail per post. A start date before the plan\u0027s analytics retention is moved up to it.",
     "undoable": false
   },
   {
@@ -452,7 +460,7 @@
     "module": "posts",
     "risk": "Read",
     "scope": "posts:read",
-    "description": "How a post will appear: the full text with its length against the platform's limit, the media in order with type and size, the placement and the local time.",
+    "description": "How a post will appear: the text with its length (on X, Threads, Bluesky and Mastodon the first post, with the whole thread beside it), the placement (post type and system post type), the platform title, first comment, board and link, the media in order with type, dimensions, file size and duration, the local time, and the problems the save-time rules find on its stored settings.",
     "undoable": false
   },
   {
@@ -460,7 +468,7 @@
     "module": "channels",
     "risk": "Read",
     "scope": "channels:read",
-    "description": "The weekly posting slots of each channel (day and local time) that the queue fills. find_free_slots says which of them are empty on given dates.",
+    "description": "The weekly posting slots of each channel (id, day, local time in the social set\u0027s timezone) that the queue fills, with how many queued posts sit in each. The ids are what set_posting_slots takes to move a slot. find_free_slots says which slots are empty on given dates.",
     "undoable": false
   },
   {
@@ -468,7 +476,7 @@
     "module": "channels",
     "risk": "Read",
     "scope": "channels:read",
-    "description": "Where the member reconnects an expired or broken channel. Reconnecting needs the member to sign in to the network themselves, so Copilot cannot do it; it can open the page with navigate.",
+    "description": "Where the member reconnects an expired or broken channel: the app\u0027s social set page, which starts the network\u0027s sign-in for that channel on arrival (Bluesky and Mastodon ask for the credentials on the page). Reconnecting needs the member to sign in to the network themselves, so no tool can do it. In the app Copilot can open the path with navigate; elsewhere give the member the url.",
     "undoable": false
   },
   {
@@ -476,7 +484,7 @@
     "module": "short_links",
     "risk": "Read",
     "scope": "url_shortener:read",
-    "description": "Clicks on one short link: total, by day, by country, by device and the posts that carry it.",
+    "description": "Clicks on one short link: total, by day (last 60), by country, city, device and operating system, and the posts that carry it. Clicks are counted through Viraly\u0027s redirect, so a Bitly, Dub or Rebrandly link shows the clicks that provider reports to nobody: 0 here.",
     "undoable": false
   },
   {
@@ -484,7 +492,7 @@
     "module": "short_links",
     "risk": "Read",
     "scope": "url_shortener:read",
-    "description": "Which shortener the workspace uses by default (Viraly's own, Bitly, Dub or Rebrandly) and its default domain.",
+    "description": "Which shortener the workspace uses by default (Viraly\u0027s own, Bitly, Dub or Rebrandly), which providers are connected with their default domain, and which one and which domain new links are made with: a default that is not connected falls back to Viraly\u0027s own.",
     "undoable": false
   },
   {
@@ -492,7 +500,7 @@
     "module": "social_sets",
     "risk": "Read",
     "scope": "social_sets:read",
-    "description": "The active social set in detail: name, short code, colour, timezone and each connected channel with its status.",
+    "description": "The active social set in detail: name, short code, colour, timezone, when it was created, and each connected channel with its username, account type, status and problem.",
     "undoable": false
   },
   {
@@ -508,7 +516,7 @@
     "module": "workspace",
     "risk": "Read",
     "scope": "workspace:read",
-    "description": "The workspace and the active social set: names, plan, timezone and how many channels are connected. Use it for questions about the account itself. For the workspace's settings (notifications, API keys, connected apps, webhooks, Slack, Teams, Discord) use get_workspace_settings and its neighbours in the settings module.",
+    "description": "The workspace (id, name, plan, status, when it was created, how many channels it has in all) and the active social set (id, name, timezone, how many channels are connected to it). Use it for questions about the account itself. For the workspace\u0027s settings (notifications, API keys, connected apps, webhooks, Slack, Teams, Discord) use get_workspace_settings and its neighbours in the settings module; for the plan\u0027s limits use get_subscription.",
     "undoable": false
   },
   {
@@ -516,7 +524,7 @@
     "module": "workspace",
     "risk": "Read",
     "scope": "workspace:read",
-    "description": "The brief the members wrote for Copilot: brand voice, audience, do and don't lists, posting rules. The social set's own brief when it has one, otherwise the workspace's.",
+    "description": "The brief the members wrote for Copilot: brand voice, audience, do and don\u0027t lists, posting rules. The social set\u0027s own brief when it has one, otherwise the workspace\u0027s, with when it last changed and the 8,000-character limit.",
     "undoable": false
   },
   {
@@ -524,15 +532,15 @@
     "module": "media",
     "risk": "ReversibleWrite",
     "scope": "media:write",
-    "description": "Imports a file from Dropbox or Unsplash into the active social set's media library. It runs in the background; the result gives the job's state.",
-    "undoable": false
+    "description": "Imports a file into the active social set\u0027s media library the way the app\u0027s import panel does: from a public direct link, a Dropbox direct link or an Unsplash photo id. The server checks the link at once and refuses a dead, oversized or unsupported one with the reason; the download then runs in the background. The result names the file (mediaId) and the job; get_media on the file says when it is Completed, or why it Failed.",
+    "undoable": true
   },
   {
     "name": "list_bio_integrations",
     "module": "bio_links",
     "risk": "Read",
     "scope": "biolinks:read",
-    "description": "The email-list integrations (for example AWeber, HubSpot, Kit) the active social set's bio pages can send new subscribers to.",
+    "description": "The email and CRM integrations (for example Mailchimp, HubSpot, Kit) connected to the active social set that a bio page\u0027s email form can send new subscribers to; update_bio_page emailIntegrationId attaches one. Pixel and tag integrations are not listed; those are set per page with pixelTracking.",
     "undoable": false
   },
   {
@@ -540,7 +548,7 @@
     "module": "bio_links",
     "risk": "Read",
     "scope": "biolinks:read",
-    "description": "The link-in-bio pages of the active social set: id, title, URL slug and custom domain.",
+    "description": "The link-in-bio pages of the active social set: id, title, slug, public URL, custom domain with its status (the domain serves the page only when AVAILABLE), auto-add limit and dates.",
     "undoable": false
   },
   {
@@ -548,7 +556,7 @@
     "module": "categories",
     "risk": "Read",
     "scope": "categories:read",
-    "description": "The workspace's post categories (content pillars such as Promotions or Tips) with id, colour and how many posts use each.",
+    "description": "The workspace\u0027s post categories (content pillars such as Promotions or Tips) with id, colour, sort order and how many posts use each.",
     "undoable": false
   },
   {
@@ -556,7 +564,7 @@
     "module": "channels",
     "risk": "Read",
     "scope": "channels:read",
-    "description": "The connected accounts and pages of the active social set: id, name, username, platform and status (Active, Expired, Disabled, Locked). Use it to turn a channel name into its id.",
+    "description": "The connected accounts and pages of the active social set: id, name, username, platform, account type, status (Active, Expired, Disabled, Locked) and the problem behind a status. Use it to turn a channel name into its id.",
     "undoable": false
   },
   {
@@ -564,7 +572,7 @@
     "module": "inbox",
     "risk": "Read",
     "scope": "comment_rules:read",
-    "description": "The comment rules of the active social set, or of one post: id, post, what triggers them, what they do, status and what they did in the last 30 days.",
+    "description": "The comment rules of the active social set, or of one post: id, post (and whether that post was deleted), what triggers them, what they do, the exclusions, delays and cap, status and what they did in the last 30 days.",
     "undoable": false
   },
   {
@@ -572,7 +580,7 @@
     "module": "evergreen",
     "risk": "Read",
     "scope": "posts:read",
-    "description": "The evergreen schedules of the active social set: which post recycles, how often, how many times so far and whether it is paused.",
+    "description": "The evergreen schedules of the active social set, as the Recycled content page lists them: the post, every how many days (0 with customDatesLocal), the caption variations, the limit and end date, whether paused, and the copies (generated so far, scheduled, published, drafts; the original is not counted). Paged; hasMore says when there is another page.",
     "undoable": false
   },
   {
@@ -580,7 +588,7 @@
     "module": "feeds",
     "risk": "Read",
     "scope": "feeds:read",
-    "description": "The newest items of a feed: title, link, summary and whether they were used.",
+    "description": "The items of a feed, newest first: id, title, link, summary, image, published date and whether they were used; paged, with the total and hasMore.",
     "undoable": false
   },
   {
@@ -588,7 +596,7 @@
     "module": "feeds",
     "risk": "Read",
     "scope": "feeds:read",
-    "description": "The RSS and Atom feeds the active social set follows, with unread item counts and fetch errors.",
+    "description": "The RSS and Atom feeds the active social set follows: id, name, URL, description, collection, status, unread and item counts, last fetch and fetch error; optionally one status or one collection.",
     "undoable": false
   },
   {
@@ -596,7 +604,7 @@
     "module": "hashtags",
     "risk": "Read",
     "scope": "hashtags:read",
-    "description": "The saved hashtag lists of the active social set: id, topic and the hashtags.",
+    "description": "The saved hashtag lists of the active social set, newest first: id, topic, the hashtags in full and when each was made. At most 100; truncated says when there are more.",
     "undoable": false
   },
   {
@@ -604,7 +612,7 @@
     "module": "ideas",
     "risk": "Read",
     "scope": "ideas:read",
-    "description": "The idea boards of the active social set with how many ideas each holds.",
+    "description": "The idea boards of the active social set (id, name, description, colour, order) with how many ideas each holds. A set with no boards gets the app\u0027s four default boards on the first call.",
     "undoable": false
   },
   {
@@ -612,7 +620,7 @@
     "module": "ideas",
     "risk": "Read",
     "scope": "ideas:read",
-    "description": "The ideas on one board: title, caption, notes, link, planned date and status.",
+    "description": "The ideas on one board in the board\u0027s order, or the ideas planned in a date range across the set\u0027s boards: id, title, caption, notes, link, planned date, status, order, tags and media ids; paged, with the total and hasMore.",
     "undoable": false
   },
   {
@@ -620,7 +628,7 @@
     "module": "media",
     "risk": "Read",
     "scope": "media:read",
-    "description": "Files in one media library collection of the active social set, 25 per page, newest first: id, type, size, alt text and tags. Use the ids as mediaIds in posts.",
+    "description": "Finished files in one media library collection of the active social set, favourites first then newest first, with the same filters as the app: id, type, status, name, width and height, duration, size, urls, alt text, tags. hasMore and nextCursor page it. Use the ids as mediaIds in posts.",
     "undoable": false
   },
   {
@@ -628,7 +636,7 @@
     "module": "media",
     "risk": "Read",
     "scope": "media:read",
-    "description": "The media library's collections (folders) in the active social set, with how many files each holds.",
+    "description": "The media library\u0027s collections (folders) of the active social set as the app lists them, with how many files each holds, its tags and notes.",
     "undoable": false
   },
   {
@@ -636,7 +644,7 @@
     "module": "approvals",
     "risk": "Read",
     "scope": "posts:read",
-    "description": "Posts of the active social set in the approval workflow: by default the ones waiting for this member to approve, with channel, local time and caption start.",
+    "description": "Posts of the active social set in the approval workflow, as the app\u0027s approvals page lists them: by default the ones waiting for this member to approve. Each with its approval: who asked and when, the rule (all must approve, or N of M), every approver\u0027s decision with its time and comment (a rejection\u0027s reason), and whether it is resolved. Paged; hasMore says when there is another page.",
     "undoable": false
   },
   {
@@ -644,7 +652,7 @@
     "module": "channels",
     "risk": "Read",
     "scope": "channels:read",
-    "description": "The boards of a Pinterest channel, with their ids. A pin needs a board.",
+    "description": "The boards of a Pinterest channel with their ids, as the app\u0027s board picker shows them. A pin needs one: pass the id as boardId on create_draft, schedule_post or update_post. Without refresh the list is what the last fetch stored, so a board made on Pinterest since may be missing.",
     "undoable": false
   },
   {
@@ -652,7 +660,7 @@
     "module": "approvals",
     "risk": "Read",
     "scope": "posts:read",
-    "description": "The team's internal comments on a post (not comments from the network), oldest first, with who wrote them.",
+    "description": "The team\u0027s internal comments on a post (not comments from the network), oldest first, as the post\u0027s comment thread shows them: who wrote each, its full text (up to 5,000 characters), when it was edited, the members mentioned in it and its attachments.",
     "undoable": false
   },
   {
@@ -660,7 +668,7 @@
     "module": "posts",
     "risk": "Read",
     "scope": "posts:read",
-    "description": "Posts of the active social set, 25 per page, latest scheduled first: id, a short caption, channel, status, local scheduled time and summary metrics. For one post in full use get_post; for the best performers use list_top_posts; for posts waiting for the member's approval use list_pending_approvals (approvals module), which knows who approves what.",
+    "description": "Posts of the active social set, 25 per page, latest scheduled first with unscheduled drafts last: id, a short caption, title, channel, status, local scheduled time, media count, categories, approval state and summary metrics. startDate and endDate bound the scheduled date in the social set\u0027s timezone (dateField switches to the creation or publish date; a published post the platform import brought in has no stored publish time and counts by its scheduled time, when it went out); hasMore says when another page exists. For one post in full use get_post; for the best performers use list_top_posts; for posts waiting for the member\u0027s approval use list_pending_approvals (approvals module), which knows who approves what.",
     "undoable": false
   },
   {
@@ -668,7 +676,7 @@
     "module": "evergreen",
     "risk": "Read",
     "scope": "posts:read",
-    "description": "The copies an evergreen post has produced so far: each copy's time and status.",
+    "description": "The copies of an evergreen post, earliest first: published ones and the ones still scheduled or drafted, each with its local time and status. The original post is named apart, not counted as a copy. Paged; hasMore says when there is another page.",
     "undoable": false
   },
   {
@@ -676,7 +684,7 @@
     "module": "short_links",
     "risk": "Read",
     "scope": "url_shortener:read",
-    "description": "The workspace's short links, 25 per page, newest first: short URL, original URL, clicks and the shortener that made it.",
+    "description": "The workspace\u0027s active short links, newest first: id, short URL, original URL, clicks and the shortener that made it; paged, with the total and hasMore.",
     "undoable": false
   },
   {
@@ -684,7 +692,7 @@
     "module": "workspace",
     "risk": "Read",
     "scope": "social_sets:read",
-    "description": "The social sets this member can open, with name, short code and timezone, and which one is active. Tools work on the active set; to act on another one the member named, pass its id as socialSetId.",
+    "description": "Every social set this member can open, as the app\u0027s list shows them: id, name, short code, colour, timezone, when it was created, how many channels it has, and which one is active (null through an API connection, which has no active set). Tools work on the active set; to act on another one the member named, pass its id as socialSetId.",
     "undoable": false
   },
   {
@@ -692,7 +700,7 @@
     "module": "bio_links",
     "risk": "Read",
     "scope": "subscribers:read",
-    "description": "People who signed up on a bio page's email form, newest first: name, email and date; at most 25, with the total.",
+    "description": "People who signed up on a bio page\u0027s email form, newest first: id, name, email, phone and when; paged (page, pageSize), with the total and hasMore, and the app\u0027s search and date filters.",
     "undoable": false
   },
   {
@@ -700,7 +708,7 @@
     "module": "workspace",
     "risk": "Read",
     "scope": "workspace:read",
-    "description": "Timezone ids the app accepts, for setting a social set's timezone. Filter with search; at most 50 come back.",
+    "description": "Timezone ids the app accepts for a social set (IANA names such as Europe/Berlin), with the display name and the standard UTC offset. Up to 100 come back with the total; use search to find one.",
     "undoable": false
   },
   {
@@ -708,7 +716,7 @@
     "module": "analytics",
     "risk": "Read",
     "scope": "analytics:read",
-    "description": "The best performing published posts of the active social set in a date range, across its channels, with summary metrics. Use it for questions like \"what was my best post this week\".",
+    "description": "The best (or worst) published posts of the active social set in a date range, ranked over every post of the range in the app\u0027s own order (engagement = likes \u002B comments \u002B shares \u002B clicks; engagement rate = engagement over impressions), paged, with the total. YouTube posts are left out of a ranking by engagement or engagement rate (not YouTube\u0027s own figures). A start date before the plan\u0027s analytics retention is moved up to it. Use it for \u0022what was my best post this week\u0022.",
     "undoable": false
   },
   {
@@ -716,7 +724,7 @@
     "module": "media",
     "risk": "ReversibleWrite",
     "scope": "media:write",
-    "description": "Moves files to another collection of the same social set.",
+    "description": "Moves files to another collection of the same social set. Every id must be in this set\u0027s library; the files\u0027 tags are left as they are, as in the app.",
     "undoable": true
   },
   {
@@ -724,7 +732,7 @@
     "module": "posts",
     "risk": "ReversibleWrite",
     "scope": "posts:write",
-    "description": "Puts a draft or scheduled post into its channel's next empty posting slot; it then publishes by itself at that time.",
+    "description": "Puts a draft or scheduled post into its channel\u0027s next empty posting slot; it then publishes by itself at that time.",
     "undoable": true
   },
   {
@@ -740,7 +748,7 @@
     "module": "evergreen",
     "risk": "ReversibleWrite",
     "scope": "posts:write",
-    "description": "Pauses an evergreen schedule so no new copies are made, or resumes it.",
+    "description": "Pauses an evergreen schedule, as the Recycled content page does: every unpublished copy (and the original, if not yet published) becomes a draft and nothing publishes. Resume schedules the copies with a future time again, deletes the copies whose time passed while paused, and keeps as drafts those whose media is not usable. Neither makes new copies.",
     "undoable": true
   },
   {
@@ -756,15 +764,15 @@
     "module": "bio_links",
     "risk": "ReversibleWrite",
     "scope": "biolinks:write",
-    "description": "Removes a link button or a social icon from a bio page.",
+    "description": "Removes an item (link, social icon, video, grid tile, tip button, product or RSS feed) from a bio page; a section left empty disappears from the page, as in the editor.",
     "undoable": true
   },
   {
-    "name": "request_approval",
-    "module": "approvals",
-    "risk": "ReversibleWrite",
-    "scope": "posts:write",
-    "description": "Sends a post for approval: it waits as Pending approval and does not publish until approved. The approvers are notified as in the app.",
+    "name": "remove_custom_domain",
+    "module": "bio_links",
+    "risk": "AlwaysAsk",
+    "scope": "biolinks:write",
+    "description": "Releases a bio page\u0027s custom domain: the page serves from its Viraly URL (get_bio_page url) again and the domain\u0027s certificate is dropped; requesting it again starts verification over. The member confirms every time.",
     "undoable": false
   },
   {
@@ -772,7 +780,7 @@
     "module": "bio_links",
     "risk": "ReversibleWrite",
     "scope": "biolinks:write",
-    "description": "Starts serving a bio page on the member's own domain. It returns the DNS records the member must add at their registrar; the domain works once they are in place.",
+    "description": "Starts serving a bio page on the member\u0027s own domain (Enterprise plan only, as in the app). It returns the DNS records the member must add at their registrar; get_custom_domain checks the status, and the domain serves the page once AVAILABLE. A page has one domain; remove_custom_domain releases it.",
     "undoable": true
   },
   {
@@ -780,7 +788,7 @@
     "module": "media",
     "risk": "ReversibleWrite",
     "scope": "media:write",
-    "description": "Makes an edited copy of a library file on the server: a centred crop to an aspect ratio, a video trim, or both. The original stays; the copy appears in the library when the render finishes.",
+    "description": "Makes an edited copy of a library VIDEO on the server, as the app\u0027s media editor does: a centred crop to an aspect ratio, a trim to one range of seconds, or both. Images cannot be edited this way (the renderer takes video only). The original stays; the copy is a new file in the original\u0027s collection that starts Uploading and becomes Completed when the render finishes (get_media on mediaId). Undo cancels a running render or removes the finished copy.",
     "undoable": true
   },
   {
@@ -788,7 +796,7 @@
     "module": "posts",
     "risk": "ReversibleWrite",
     "scope": "posts:write",
-    "description": "Moves a draft, scheduled or pending-approval post of the active social set to a new time. A draft keeps its status: it gets the time but stays a draft and does not publish until someone schedules it. Needs the member's confirmation unless they allowed rescheduling.",
+    "description": "Moves a draft, scheduled or pending-approval post of the active social set to a new time. A draft keeps its status: it gets the time but stays a draft and does not publish until someone schedules it. Needs the member\u0027s confirmation unless they allowed rescheduling.",
     "undoable": true
   },
   {
@@ -803,8 +811,8 @@
     "name": "rewrite_for_channel",
     "module": "ai",
     "risk": "Read",
-    "scope": "posts:read",
-    "description": "Rewrites a caption for another platform's length and style, for example a LinkedIn post into a Bluesky one under 300 characters.",
+    "scope": "posts:write",
+    "description": "Rewrites a caption for another platform\u0027s style with the composer\u0027s Rephrase, then checks it against that platform\u0027s caption limit (Bluesky 300, X 280, Threads and Mastodon 500, Pinterest 800, Instagram and TikTok 2200, LinkedIn 3000, Facebook and YouTube 5000) and shortens up to twice when it is over; fitsLimit says whether it fits. Returns text only.",
     "undoable": false
   },
   {
@@ -812,7 +820,7 @@
     "module": "posts",
     "risk": "ReversibleWrite",
     "scope": "posts:write",
-    "description": "Schedules a post to publish by itself at a time, or in the channel's next queue slot: a new post, or an existing draft. It publishes without anyone pressing a button, so check it with validate_post first.",
+    "description": "Schedules a post to publish by itself at a time, or in the channel\u0027s next queue slot: a new post with everything the composer takes (text, media, title, categories, platform settings, approval, evergreen), or an existing draft. It publishes without anyone pressing a button, so check it with validate_post first.",
     "undoable": true
   },
   {
@@ -820,7 +828,7 @@
     "module": "media",
     "risk": "Read",
     "scope": "media:read",
-    "description": "Searches every collection of the active social set's media library by file name, alt text or tag; at most 25 results.",
+    "description": "Searches every collection of the active social set\u0027s media library at once by file name or alt text, and by tags with the tags filter; finished files only, favourites first then newest. hasMore and nextCursor page it.",
     "undoable": false
   },
   {
@@ -828,7 +836,7 @@
     "module": "posts",
     "risk": "Read",
     "scope": "posts:read",
-    "description": "Finds posts of the active social set by words in their text, newest first, among its latest 2,000 posts. Use it to find \"the post about the autumn guide\".",
+    "description": "Finds posts of the active social set by words in their text, newest first, among its latest 2,000 posts. Use it to find \u0022the post about the autumn guide\u0022.",
     "undoable": false
   },
   {
@@ -836,7 +844,7 @@
     "module": "short_links",
     "risk": "ReversibleWrite",
     "scope": "url_shortener:write",
-    "description": "Chooses which shortener the workspace uses by default.",
+    "description": "Chooses which connected shortener the workspace makes links with by default, and for Bitly, Dub or Rebrandly the domain they are made on.",
     "undoable": true
   },
   {
@@ -844,7 +852,7 @@
     "module": "channels",
     "risk": "ReversibleWrite",
     "scope": "channels:write",
-    "description": "Replaces one channel's weekly posting slots. Queued posts move to the new slots as the app does when slots are edited.",
+    "description": "Replaces one channel\u0027s weekly posting slots, the times the queue fills. Queued posts follow their slot only when the slot is sent with its id and a new time (they move to that time on the same date, as the app\u0027s slot editor does); a removed slot\u0027s queued posts keep their date, time and queued status (the app still lists them in the queue at that time) but no longer sit in a posting slot, which get_post shows as inPostingSlot false. generateSlotsPerDay replaces every slot with best-time slots and moves each queued post to the new slot in the same position of its day; posts beyond that count keep their time without a slot. The result says what moved. Undo restores the old times of slots that still exist and re-adds removed ones as new slots; posts that lost their slot are not re-attached.",
     "undoable": true
   },
   {
@@ -852,7 +860,7 @@
     "module": "feeds",
     "risk": "ReversibleWrite",
     "scope": "feeds:write",
-    "description": "Follows an RSS or Atom feed in the active social set so its items appear in Feeds.",
+    "description": "Follows an RSS or Atom feed in the active social set so its items appear in Feeds, as the app\u0027s add dialog does: the feed is fetched and parsed first and refused when it cannot be read.",
     "undoable": true
   },
   {
@@ -860,7 +868,7 @@
     "module": "analytics",
     "risk": "ReversibleWrite",
     "scope": "analytics:read",
-    "description": "Asks the network for a channel's latest numbers now instead of waiting for the next scheduled fetch. It runs in the background for a few minutes.",
+    "description": "Asks the network for a channel\u0027s latest numbers now instead of waiting for the next scheduled fetch, as the app\u0027s refresh button does. It runs in the background for a few minutes; a refresh started in the last 30 minutes is reported as still running and not started again. Returns when the refresh started and when the numbers were last fetched.",
     "undoable": false
   },
   {
@@ -868,7 +876,7 @@
     "module": "feeds",
     "risk": "ReversibleWrite",
     "scope": "feeds:write",
-    "description": "Stops following a feed and removes its items. Undo follows it again; read states start over.",
+    "description": "Stops following a feed and removes its items. Undo follows it again with its name, description and collection; its items are fetched afresh and their read states start over.",
     "undoable": true
   },
   {
@@ -876,7 +884,7 @@
     "module": "media",
     "risk": "ReversibleWrite",
     "scope": "media:write",
-    "description": "Sets a library file's alt text, which posts carry to the networks that support it. generate_alt_text drafts one.",
+    "description": "Sets a library file\u0027s alt text (its notes in the library, shown in the app\u0027s file view). Posts carry their own alt text per file, and that is what reaches the networks: give postId to set it on a post that carries the file; without postId no post changes. generate_alt_text drafts the text.",
     "undoable": true
   },
   {
@@ -884,7 +892,7 @@
     "module": "bio_links",
     "risk": "ReversibleWrite",
     "scope": "biolinks:write",
-    "description": "Changes a bio page's profile name, bio or URL slug. Design and other sections are edited in the app.",
+    "description": "Changes a bio page\u0027s profile (name, bio, picture), URL slug, design (preset, colours, fonts, buttons, background), branding, auto-add limit, tracking pixels, contact card or email integration; what is not given stays. Blocks are changed with add_block, update_block and remove_block; the email form\u0027s texts and the auto-add channel settings are edited in the app.",
     "undoable": true
   },
   {
@@ -892,7 +900,7 @@
     "module": "bio_links",
     "risk": "ReversibleWrite",
     "scope": "biolinks:write",
-    "description": "Changes a link button's text or URL, or a social icon's URL, on a bio page.",
+    "description": "Changes an item of a bio page (a link, social icon, video, grid tile, tip button, product or RSS feed): its text, URL, image, colour, platform, product or feed fields, or its position in its list. What is not given stays.",
     "undoable": true
   },
   {
@@ -908,7 +916,7 @@
     "module": "evergreen",
     "risk": "ReversibleWrite",
     "scope": "posts:write",
-    "description": "Changes how often an evergreen post recycles and when it stops.",
+    "description": "Changes an evergreen schedule as the Recycled content page\u0027s edit dialog does: the interval or the copy times, the limit or end date, the caption variations. What is omitted stays as it is. A new interval or new times delete the scheduled copies and make them again from the post\u0027s time; a lower limit removes the latest copies; a higher one adds none. Undo puts the whole schedule back.",
     "undoable": true
   },
   {
@@ -916,7 +924,7 @@
     "module": "hashtags",
     "risk": "ReversibleWrite",
     "scope": "hashtags:write",
-    "description": "Changes a saved hashtag list's topic or hashtags.",
+    "description": "Changes a saved hashtag list\u0027s topic or hashtags.",
     "undoable": true
   },
   {
@@ -924,7 +932,7 @@
     "module": "ideas",
     "risk": "ReversibleWrite",
     "scope": "ideas:write",
-    "description": "Changes an idea's title, caption, notes, status or date.",
+    "description": "Changes an idea\u0027s title, caption, notes, link, status, planned date, board, media, tags or position; what is not given stays, and clear removes a caption, notes, link or date.",
     "undoable": true
   },
   {
@@ -932,7 +940,7 @@
     "module": "posts",
     "risk": "ReversibleWrite",
     "scope": "posts:write",
-    "description": "Changes the text, media or placement of a draft or scheduled post. It keeps its status and time; use reschedule_post for the time.",
+    "description": "Changes a draft or scheduled post: text, media and alt text, placement, title, categories, platform settings (config: first comment, link card, YouTube or Pinterest title, privacy, board, thread posts), approval, evergreen. What is omitted stays. It keeps its status and time; use reschedule_post for the time.",
     "undoable": true
   },
   {
@@ -940,7 +948,7 @@
     "module": "social_sets",
     "risk": "ReversibleWrite",
     "scope": "social_sets:write",
-    "description": "Renames the active social set or changes its timezone.",
+    "description": "Changes the active social set\u0027s name, timezone, colour or code, with the app\u0027s checks. A timezone change re-times every post with a future time that is scheduled, awaiting approval or being published so it keeps its local wall-clock time in the new zone (the moment it publishes changes); drafts keep their placeholder time; the result says how many moved. Undo puts the old values back the same way.",
     "undoable": true
   },
   {
@@ -948,7 +956,7 @@
     "module": "workspace",
     "risk": "ReversibleWrite",
     "scope": "social_sets:write",
-    "description": "Replaces the brief Copilot reads on every request (brand voice, audience, rules), for the whole workspace or this social set only. Show the member the new text; it replaces the old one.",
+    "description": "Replaces the brief Copilot reads on every request (brand voice, audience, rules), for the whole workspace or this social set only, up to 8,000 characters; empty removes it. A social set\u0027s own brief shadows the workspace\u0027s for that set. Show the member the new text; it replaces the old one. Through an API connection the brief is written for the workspace with no member recorded as its author.",
     "undoable": true
   },
   {
@@ -956,7 +964,7 @@
     "module": "media",
     "risk": "ReversibleWrite",
     "scope": "media:write",
-    "description": "Adds a file to the active social set's media library from a public link. The server downloads and measures it; the result says when it is ready to post.",
+    "description": "Adds a file to the active social set\u0027s media library from a public link, as the composer\u0027s import by link does: the server downloads it into the collection, then measures it. A photo comes back Completed (ready to post) within a few seconds; a video comes back Uploading or Processing and get_media says when it is ready. The same link sent twice in one run makes one file.",
     "undoable": true
   },
   {
@@ -964,7 +972,7 @@
     "module": "posts",
     "risk": "Read",
     "scope": "posts:read",
-    "description": "Checks a post before it is saved or scheduled, with the same rules the app enforces: caption length, media formats, sizes, counts and aspect ratios per platform, plus a channel that cannot publish, a time in the past and the same text already on the channel. Returns each problem; saves nothing.",
+    "description": "Checks a post before it is saved or scheduled, with the rules the server applies on save to the settings as they would be stored (caption and title lengths, first comment, board, privacy, media formats, sizes, counts and aspect ratios per platform), plus a channel that cannot publish, a time in the past and the same text already on the channel. An existing post is judged on its stored settings with the given fields laid over them. Returns each problem; saves nothing.",
     "undoable": false
   }
 ]
