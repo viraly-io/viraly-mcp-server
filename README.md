@@ -77,7 +77,7 @@ Any MCP-compliant client over Streamable HTTP works. Point it at `https://mcp.vi
 The list below is generated from the API's registry by `npm run readme`; do not edit it by hand. Risk classes: a read runs at once; a reversible write is logged with Undo; an always-ask action needs the member's confirmation in the Viraly app, and through MCP it runs under the API key's own scopes.
 
 <!-- tools:start -->
-122 tools in the registry, catalog last changed 2026-10-31.
+122 tools in the registry, catalog last changed 2026-11-04.
 
 #### workspace
 
