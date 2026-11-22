@@ -6,6 +6,7 @@ import {
   ViralyAmbiguousWriteError,
   ViralyApiError,
   ViralyAuthError,
+  ViralyPermissionError,
   ViralyPlanLimitError,
   ViralyScopeError,
   ViralyTransientError,
@@ -168,13 +169,24 @@ function safeParseJson(text: string): unknown {
   }
 }
 
-function mapErrorResponse(status: number, body: unknown): ViralyApiError {
+/** Exported for tests. */
+export function mapErrorResponse(status: number, body: unknown): ViralyApiError {
   if (status === 401) {
     return new ViralyAuthError('Access token rejected by Viraly API', body);
   }
   if (status === 403) {
-    const scope = extractMissingScope(body) ?? 'unknown';
-    return new ViralyScopeError(scope);
+    // Three refusals share the status. A scope the token lacks (required_scope or missingScope) is fixed by
+    // reconnecting; the access model's insufficient_permissions (P1: top level, or nested under error) by the
+    // workspace Owner; any other 403 carries its own reason, which the model should see rather than "reconnect".
+    const scope = extractMissingScope(body);
+    if (scope) return new ViralyScopeError(scope);
+    const permission = extractPermissionRefusal(body);
+    if (permission) {
+      return new ViralyPermissionError(permission.message ?? 'Viraly refused this for the connected member.', permission.capability, body);
+    }
+    const reason = extractErrorMessage(body);
+    if (reason) return new ViralyApiError(reason, status, 'forbidden', body);
+    return new ViralyScopeError('unknown');
   }
   if (status === 429) {
     // Two very different 429s share the status code: the per-minute API rate
@@ -207,6 +219,11 @@ function mapErrorResponse(status: number, body: unknown): ViralyApiError {
 function extractErrorMessage(body: unknown): string | null {
   if (!body || typeof body !== 'object') return null;
   const obj = body as Record<string, unknown>;
+  if (typeof obj.error === 'string' && obj.error.length > 0) return obj.error;
+  if (obj.error && typeof obj.error === 'object') {
+    const nested = (obj.error as Record<string, unknown>).message;
+    if (typeof nested === 'string' && nested.length > 0) return nested;
+  }
   const errors = obj.errors;
   if (Array.isArray(errors)) {
     const list = errors.filter((e): e is string => typeof e === 'string' && e.length > 0);
@@ -222,10 +239,31 @@ function extractRetryAfterSeconds(body: unknown): number | null {
   return typeof value === 'number' && Number.isFinite(value) ? value : null;
 }
 
+/**
+ * The access model's refusal (P1): `{ code: "insufficient_permissions", capability, message }` at the top level, as
+ * the internal and Platform APIs answer, or nested under `error`, as the public API answers. Null for anything else.
+ */
+function extractPermissionRefusal(body: unknown): { capability: string | null; message: string | null } | null {
+  if (!body || typeof body !== 'object') return null;
+  const top = body as Record<string, unknown>;
+  const candidates = [top, top.error && typeof top.error === 'object' ? (top.error as Record<string, unknown>) : null];
+  for (const record of candidates) {
+    if (record && record.code === 'insufficient_permissions') {
+      return {
+        capability: typeof record.capability === 'string' ? record.capability : null,
+        message: extractErrorMessage(body) ?? (typeof record.message === 'string' ? record.message : null),
+      };
+    }
+  }
+  return null;
+}
+
 function extractMissingScope(body: unknown): string | undefined {
   if (!body || typeof body !== 'object') return undefined;
   const record = body as Record<string, unknown>;
   if (typeof record.required_scope === 'string') return record.required_scope;
+  // The agent-tools route names it missingScope as well.
+  if (typeof record.missingScope === 'string') return record.missingScope;
   if (typeof record.error_description === 'string' && record.error_description.includes('scope')) {
     return record.error_description;
   }
