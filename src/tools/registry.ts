@@ -5,6 +5,7 @@ import { getClient } from '../api/client-factory.js';
 import {
   ViralyApiError,
   ViralyAuthError,
+  ViralyPermissionError,
   ViralyPlanLimitError,
   ViralyScopeError,
   ViralyTransientError,
@@ -118,6 +119,11 @@ export function formatToolError(err: unknown): string {
     return err.missingScope && err.missingScope !== 'unknown'
       ? `This tool needs the Viraly "${err.missingScope}" permission, which your current connection doesn't grant. Reconnect Viraly and approve that access to use this tool.`
       : `This tool needs a Viraly permission your current connection doesn't grant (the server didn't say which). Reconnect Viraly and approve all requested access.`;
+  }
+  if (err instanceof ViralyPermissionError) {
+    // Not a connection problem: the member who connected Viraly lacks this permission in the workspace.
+    const needs = err.capability ? ` It needs the "${err.capability}" permission.` : '';
+    return `Viraly refused this for the member who connected it: ${err.message}${needs} Reconnecting will not change that; the workspace Owner can grant the permission in Viraly's team settings.`;
   }
   if (err instanceof ViralyPlanLimitError) {
     const bodyMessage =
