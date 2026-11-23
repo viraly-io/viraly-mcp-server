@@ -54,6 +54,9 @@ describe('isViralyAccessToken', () => {
     expect(isViralyAccessToken('vrl_abc')).toBe(false);
     expect(isViralyAccessToken('')).toBe(false);
     expect(isViralyAccessToken('vat_')).toBe(false);
+    expect(isViralyAccessToken('vat_abc def')).toBe(false);
+    expect(isViralyAccessToken('vat_abc\nvat_def')).toBe(false);
+    expect(isViralyAccessToken('vat_AZaz09_-')).toBe(true);
   });
 });
 

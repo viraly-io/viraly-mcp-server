@@ -29,9 +29,14 @@ const BEARER_PREFIX = 'Bearer ';
 /** The prefix of a Viraly OAuth access token. Both transports refuse a token without it (MCP-14). */
 export const TOKEN_PREFIX = 'vat_';
 
-/** Whether a token has the shape of a Viraly OAuth access token (`vat_` and something after it). */
+const TOKEN_SHAPE = /^vat_[A-Za-z0-9_-]+$/;
+
+/**
+ * Whether a token has the shape of a Viraly OAuth access token: `vat_` and URL-safe characters after it, nothing else
+ * (a value with a space or a line break inside would pass startup and then fail on every call).
+ */
 export function isViralyAccessToken(token: string): boolean {
-  return token.startsWith(TOKEN_PREFIX) && token.length > TOKEN_PREFIX.length;
+  return TOKEN_SHAPE.test(token);
 }
 
 export interface AuthenticatedRequest extends Request {
