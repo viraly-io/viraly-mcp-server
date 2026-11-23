@@ -26,7 +26,13 @@ import { authFailureCounter } from '../observability/metrics.js';
  */
 
 const BEARER_PREFIX = 'Bearer ';
-const TOKEN_PREFIX = 'vat_';
+/** The prefix of a Viraly OAuth access token. Both transports refuse a token without it (MCP-14). */
+export const TOKEN_PREFIX = 'vat_';
+
+/** Whether a token has the shape of a Viraly OAuth access token (`vat_` and something after it). */
+export function isViralyAccessToken(token: string): boolean {
+  return token.startsWith(TOKEN_PREFIX) && token.length > TOKEN_PREFIX.length;
+}
 
 export interface AuthenticatedRequest extends Request {
   accessToken: string;
@@ -58,7 +64,7 @@ export function bearerAuthMiddleware(config: ServerConfig) {
       return;
     }
 
-    if (!token.startsWith(TOKEN_PREFIX)) {
+    if (!isViralyAccessToken(token)) {
       authFailureCounter.inc({ reason: 'wrong_prefix' });
       respondUnauthorized(res, challengeUrl, 'invalid_token', 'Token format unrecognized');
       return;
