@@ -10,6 +10,7 @@ import {
   ViralyScopeError,
   ViralyTransientError,
 } from '../api/errors.js';
+import { tryGetTokenContext } from '../auth/token-context.js';
 import { toolCallCounter, toolCallDuration } from '../observability/metrics.js';
 import { deriveIdempotencyKey } from './idempotency.js';
 
@@ -29,7 +30,8 @@ export interface RegistryTool {
   scope: string;
   risk: 'Read' | 'ReversibleWrite' | 'AlwaysAsk';
   inputSchema: { type: 'object'; properties?: Record<string, unknown>; required?: string[] };
-  annotations: { readOnlyHint: boolean; destructiveHint: boolean; idempotentHint: boolean };
+  /** openWorldHint comes from the API since close audit MCP-10; an older API leaves it out. */
+  annotations: { readOnlyHint: boolean; destructiveHint: boolean; idempotentHint: boolean; openWorldHint?: boolean };
 }
 
 interface RegistryCallResult {
@@ -43,7 +45,25 @@ const LIST_PATH = '/api/platforms/agent-tools';
 /** The registry as this token may use it. One request per tools/list; the server is stateless. */
 export async function fetchRegistry(): Promise<RegistryTool[]> {
   const body = await getClient().call<{ tools: RegistryTool[] }>({ method: 'GET', path: LIST_PATH });
+  for (const tool of body.tools) rememberToolName(tool.name);
   return body.tools;
+}
+
+/**
+ * Tool names the API has listed to this process, the only values a metric label takes (close audit MCP-18): the name
+ * in a tools/call comes from the client, and labelling with it unchecked lets any caller grow the series without bound.
+ * Bounded so a misbehaving API cannot grow it either.
+ */
+const knownToolNames = new Set<string>();
+const MAX_KNOWN_TOOL_NAMES = 500;
+
+function rememberToolName(name: string): void {
+  if (knownToolNames.size < MAX_KNOWN_TOOL_NAMES) knownToolNames.add(name);
+}
+
+/** Exported for tests. */
+export function metricToolLabel(name: string): string {
+  return knownToolNames.has(name) ? name : 'unlisted';
 }
 
 export async function callRegistryTool(name: string, args: Record<string, unknown>): Promise<RegistryCallResult> {
@@ -68,7 +88,8 @@ export function toMcpTool(tool: RegistryTool) {
       readOnlyHint: tool.annotations.readOnlyHint,
       destructiveHint: tool.annotations.destructiveHint,
       idempotentHint: tool.annotations.idempotentHint,
-      openWorldHint: false,
+      // Publishing, sending a reply or fetching an outside address reaches past the workspace (close audit MCP-10).
+      openWorldHint: tool.annotations.openWorldHint ?? false,
     },
   };
 }
@@ -102,11 +123,18 @@ export function registerAllTools(server: McpServer): void {
       return { content: [{ type: 'text' as const, text: toMcpContent(result) }] };
     } catch (err) {
       status = 'error';
+      if (err instanceof ViralyAuthError) {
+        // The API refused the token (revoked or expired). The HTTP transport answers 401 with the challenge, so the
+        // host signs in again instead of showing an error under a 200 (close audit MCP-18).
+        const ctx = tryGetTokenContext();
+        if (ctx) ctx.authRejected = true;
+      }
       return { isError: true, content: [{ type: 'text' as const, text: formatToolError(err) }] };
     } finally {
       const elapsedSec = Number(process.hrtime.bigint() - startedAt) / 1e9;
-      toolCallCounter.inc({ tool: name, status });
-      toolCallDuration.observe({ tool: name, status }, elapsedSec);
+      const tool = metricToolLabel(name);
+      toolCallCounter.inc({ tool, status });
+      toolCallDuration.observe({ tool, status }, elapsedSec);
     }
   });
 }

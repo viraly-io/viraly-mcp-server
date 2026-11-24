@@ -5,7 +5,7 @@
 
 The official [Model Context Protocol](https://modelcontextprotocol.io) server for [Viraly](https://viraly.io) — connect any MCP-aware AI assistant (Claude Desktop, Claude.ai web, ChatGPT, Cursor, custom agents built on the Anthropic / OpenAI SDKs) directly to your Viraly social-media workspace and let it schedule posts, run analytics, generate captions, and manage every channel you've connected, all in plain language.
 
-**First-class MCP support: 121 tools, full CRUD.** Not a read-only sidekick: your AI can create, read, update, and delete across posts, channels, media, analytics, bio links, short links, ideas, feeds and more, bound by the same OAuth scopes and plan limits as the web app.
+**First-class MCP support: over a hundred tools, full CRUD.** Not a read-only sidekick: your AI can create, read, update, and delete across posts, channels, media, analytics, bio links, short links, ideas, feeds and more, bound by the same OAuth scopes and plan limits as the web app.
 
 > **Available on every Viraly plan, including Free.** No API key — sign in once with OAuth and your AI assistant gets scoped, revocable access to your workspace.
 
@@ -30,7 +30,7 @@ Once connected, your AI assistant can drive Viraly using natural language:
 
 > *"Post this clip as an Instagram story today and as a YouTube Short tomorrow morning."*
 
-The MCP server exposes **121 tools** across reading, writing, analytics, and AI generation; see the [tool catalog](#tool-catalog) below.
+The MCP server exposes **over a hundred tools** across reading, writing, analytics, and AI generation; the [tool catalog](#tool-catalog) below has the exact list and count.
 
 ---
 
@@ -74,7 +74,7 @@ Any MCP-compliant client over Streamable HTTP works. Point it at `https://mcp.vi
 
 ## Tool catalog
 
-The list below is generated from the API's registry by `npm run readme`; do not edit it by hand. Risk classes: a read runs at once; a reversible write is logged with Undo; an always-ask action needs the member's confirmation in the Viraly app, and through MCP it runs under the API key's own scopes.
+The list below is generated from the API's registry by `npm run readme`; do not edit it by hand. Risk classes: a read runs at once; a reversible write is logged with Undo; an always-ask action needs the member's confirmation in the Viraly app; through MCP there is no card, so the host's own confirmation applies, and it runs under the OAuth token's scopes.
 
 <!-- tools:start -->
 126 tools in the registry, catalog last changed 2026-11-05.

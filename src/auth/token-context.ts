@@ -13,6 +13,8 @@ import { AsyncLocalStorage } from 'node:async_hooks';
 export interface TokenContext {
   /** Raw `vat_*` access token from the Authorization header, or from VIRALY_ACCESS_TOKEN under stdio. */
   accessToken: string;
+  /** Set when the API answered 401 for this token during the request; the HTTP transport then answers 401 (MCP-18). */
+  authRejected?: boolean;
 }
 
 const storage = new AsyncLocalStorage<TokenContext>();
