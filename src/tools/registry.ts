@@ -102,6 +102,15 @@ export function toMcpContent(result: RegistryCallResult): string {
     : `${result.summary}\n\n${json}`;
 }
 
+/**
+ * The API refused the token (revoked or expired). The HTTP transport then answers 401 with the challenge, so the host
+ * signs in again instead of showing an error under a 200 (close audit MCP-18).
+ */
+function markAuthRejected(): void {
+  const ctx = tryGetTokenContext();
+  if (ctx) ctx.authRejected = true;
+}
+
 export function registerAllTools(server: McpServer): void {
   // No tool is registered through McpServer.registerTool any more, so the tools capability is declared by hand.
   // listChanged stays false: the transport cannot push a notification (see the http transport), and clients
@@ -109,8 +118,14 @@ export function registerAllTools(server: McpServer): void {
   server.server.registerCapabilities({ tools: { listChanged: false } });
 
   server.server.setRequestHandler(ListToolsRequestSchema, async () => {
-    const tools = await fetchRegistry();
-    return { tools: tools.map(toMcpTool) };
+    try {
+      const tools = await fetchRegistry();
+      return { tools: tools.map(toMcpTool) };
+    } catch (err) {
+      // Hosts list the tools first on reconnect: a refused token answers 401 here too (review of MCP-18).
+      if (err instanceof ViralyAuthError) markAuthRejected();
+      throw err;
+    }
   });
 
   server.server.setRequestHandler(CallToolRequestSchema, async (request) => {
@@ -123,12 +138,7 @@ export function registerAllTools(server: McpServer): void {
       return { content: [{ type: 'text' as const, text: toMcpContent(result) }] };
     } catch (err) {
       status = 'error';
-      if (err instanceof ViralyAuthError) {
-        // The API refused the token (revoked or expired). The HTTP transport answers 401 with the challenge, so the
-        // host signs in again instead of showing an error under a 200 (close audit MCP-18).
-        const ctx = tryGetTokenContext();
-        if (ctx) ctx.authRejected = true;
-      }
+      if (err instanceof ViralyAuthError) markAuthRejected();
       return { isError: true, content: [{ type: 'text' as const, text: formatToolError(err) }] };
     } finally {
       const elapsedSec = Number(process.hrtime.bigint() - startedAt) / 1e9;

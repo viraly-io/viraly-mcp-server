@@ -137,6 +137,17 @@ describe('close audit P7 (MCP-10, MCP-13, MCP-18)', () => {
     expect(res.challenge).toContain('error="invalid_token"');
   });
 
+  it('answers 401 when listing the tools with a refused token, as hosts list first on reconnect (MCP-18)', async () => {
+    stubApi(() => {
+      throw new ViralyAuthError('Access token rejected by Viraly API', {});
+    });
+
+    const res = await post({ jsonrpc: '2.0', id: 1, method: 'tools/list', params: {} });
+
+    expect(res.status).toBe(401);
+    expect(res.challenge).toContain('error="invalid_token"');
+  });
+
   it('answers 200 for a tool error that is not about the token', async () => {
     stubApi(() => {
       throw new Error('boom');
