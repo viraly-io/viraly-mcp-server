@@ -652,7 +652,7 @@
     "module": "ideas",
     "risk": "Read",
     "scope": "ideas:read",
-    "description": "The idea boards of the active social set (id, name, description, colour, order) with how many ideas each holds. A set with no boards gets the app\u0027s four default boards on the first call, with the app\u0027s two sample ideas on the Unassigned board, as the Ideas page does on its first visit.",
+    "description": "The idea boards of the active social set (id, name, description, colour, order) with how many ideas each holds. Every set is made with the app\u0027s four default boards (two sample ideas on Unassigned); a set whose boards were all deleted lists none.",
     "undoable": false
   },
   {
