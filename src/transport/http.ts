@@ -8,9 +8,9 @@ import { pinoHttp } from 'pino-http';
 import type { Logger } from 'pino';
 
 import { type AuthenticatedRequest, bearerAuthMiddleware } from '../auth/middleware.js';
-import { runWithTokenContext } from '../auth/token-context.js';
+import { runWithTokenContext, type TokenContext } from '../auth/token-context.js';
 import type { ServerConfig } from '../config.js';
-import { registry as metricsRegistry } from '../observability/metrics.js';
+import { authFailureCounter, registry as metricsRegistry } from '../observability/metrics.js';
 import { registerAllTools } from '../tools/registry.js';
 
 /**
@@ -169,7 +169,24 @@ export function createHttpApp(config: ServerConfig, logger: Logger): Express {
 
     // Plumb the request token through async-local-storage so tool handlers
     // can pick it up without explicit parameter passing.
-    runWithTokenContext({ accessToken }, async () => {
+    // A tool call the API refused for this token (revoked or expired) answers 401 with the challenge instead of a
+    // tool error under 200, so the host runs its sign-in again (close audit MCP-18). The JSON response is written once,
+    // at the end, so its status can still change here.
+    const context: TokenContext = { accessToken };
+    const writeHead = res.writeHead.bind(res) as (...args: unknown[]) => Response;
+    (res as unknown as { writeHead: (...args: unknown[]) => Response }).writeHead = (status: unknown, ...rest: unknown[]) => {
+      if (context.authRejected && status === 200) {
+        authFailureCounter.inc({ reason: 'upstream_rejected' });
+        res.setHeader(
+          'WWW-Authenticate',
+          `Bearer resource_metadata="${config.publicOrigin}/.well-known/oauth-protected-resource", error="invalid_token", error_description="The access token was revoked or has expired"`,
+        );
+        return writeHead(401, ...rest);
+      }
+      return writeHead(status, ...rest);
+    };
+
+    runWithTokenContext(context, async () => {
       try {
         await mcpServer.connect(transport);
         await transport.handleRequest(req, res, req.body);
@@ -295,9 +312,9 @@ function timingSafeStringEquals(a: string, b: string): boolean {
 }
 
 /**
- * Scopes the resource is willing to accept. Mirrors
- * Viraly.Infrastructure.Constants.ApiPermissions.All on the .NET side. Keep
- * in sync; the discrepancy gets caught by Phase 8's audit.
+ * Scopes the resource is willing to accept: the API's `ApiPermissions.All`
+ * (Viraly.Infrastructure.Constants), which its discovery publishes as
+ * `scopes_supported`. scripts/e2e-verify.mjs compares the two (close audit MCP-13).
  */
 const VIRALY_SCOPES = [
   'posts:read',
@@ -322,5 +339,9 @@ const VIRALY_SCOPES = [
   'url_shortener:read',
   'url_shortener:write',
   'subscribers:read',
+  'subscribers:export',
   'workspace:read',
+  'posts:publish',
+  'comment_rules:read',
+  'comment_rules:write',
 ];
