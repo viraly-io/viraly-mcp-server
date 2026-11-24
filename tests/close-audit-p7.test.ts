@@ -9,6 +9,7 @@ import { ViralyAuthError } from '../src/api/errors.js';
 import { ViralyClient } from '../src/api/viraly-client.js';
 import { runWithTokenContext, type TokenContext } from '../src/auth/token-context.js';
 import type { ServerConfig } from '../src/config.js';
+import { toolCallCounter } from '../src/observability/metrics.js';
 import { metricToolLabel, registerAllTools, type RegistryTool } from '../src/tools/registry.js';
 import { createHttpApp } from '../src/transport/http.js';
 
@@ -110,6 +111,18 @@ describe('close audit P7 (MCP-10, MCP-13, MCP-18)', () => {
     });
     expect(metricToolLabel('list_posts')).toBe('list_posts');
     expect(metricToolLabel('made_up_tool_name_from_a_client')).toBe('unlisted');
+  });
+
+  it('counts a call to a name the API never listed under "unlisted", through the real handler (MCP-18)', async () => {
+    stubApi((options) => (options.method === 'GET' ? { tools: registry } : { data: {}, summary: 'ok', externalContent: false }));
+    const raw = 'client_sent_name_9f2c41';
+    await runWithTokenContext({ accessToken: 'vat_test' }, async () => {
+      await (await connect()).callTool({ name: raw, arguments: {} });
+    });
+
+    const labels = (await toolCallCounter.get()).values.map((v) => String(v.labels.tool));
+    expect(labels).toContain('unlisted');
+    expect(labels).not.toContain(raw);
   });
 
   it('marks the request when the API refuses the token during a call (MCP-18)', async () => {
