@@ -14,7 +14,7 @@ production deployment to be live first (Phase 5 CTO handoff).
 - **Supports DCR:** yes (RFC 7591 at `https://api.viraly.io/api/oauth/register`)
 - **Logo:** `assets/viraly-mcp-logo.png` — 540×540 PNG, transparent background (Viraly hummingbird)
 - **Short description:** "Schedule social posts, generate captions, and check analytics across 11+ platforms — directly from Claude."
-- **Tool count:** 121 (the count comes from `tools-catalog.json`; run `npm run readme` after updating it)
+- **Tool count:** the number in the README's tool catalog (generated from `tools-catalog.json` by `npm run readme`); never copy it here by hand
 - **Privacy policy:** https://viraly.io/privacy-policy
 - **Terms of service:** https://viraly.io/terms-of-service
 - **Support email:** support@viraly.io
@@ -22,7 +22,7 @@ production deployment to be live first (Phase 5 CTO handoff).
 **Pre-flight checks:**
 - [ ] Production server returns 200 on `/health`
 - [ ] OAuth flow works end-to-end with a fresh test account
-- [ ] All 36 tools list via `tools/list`
+- [ ] `tools/list` returns the registry for a token with every scope (the count in `tools-catalog.json`)
 - [ ] Tool schemas validate cleanly (no missing descriptions)
 
 ## 2. ChatGPT — Apps & Connectors
@@ -32,7 +32,7 @@ production deployment to be live first (Phase 5 CTO handoff).
 **Submission package:**
 - Same as Anthropic. ChatGPT supports MCP connectors natively now — no
   OpenAPI shim needed (legacy GPT Actions did; MCP path doesn't).
-- **OAuth scopes to display:** all 23 — see `viraly-mcp-server/src/transport/http.ts` `VIRALY_SCOPES`.
+- **OAuth scopes to display:** the API's `scopes_supported` (`https://api.viraly.io/.well-known/oauth-authorization-server`), mirrored in `src/transport/http.ts` `VIRALY_SCOPES`; `scripts/e2e-verify.mjs` checks they match.
 
 ## 3. Cursor — MCP Marketplace
 

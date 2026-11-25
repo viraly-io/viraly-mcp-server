@@ -109,9 +109,16 @@ section('3. GET /.well-known/oauth-protected-resource');
   const { res, json } = await req('/.well-known/oauth-protected-resource');
   check('status 200', res.status === 200, `got ${res.status}`);
   check('resource matches this origin', json?.resource === base, json?.resource);
-  check('23 scopes advertised', json?.scopes_supported?.length === 23, `got ${json?.scopes_supported?.length}`);
   const issuer = json?.authorization_servers?.[0];
   check('authorization server present', !!issuer, issuer);
+  // The scopes this server advertises are the API's own (close audit MCP-13): compared with the authorization
+  // server's discovery instead of a hand-kept count.
+  if (issuer) {
+    const as = await fetch(`${issuer.replace(/\/$/, '')}/.well-known/oauth-authorization-server`).then((r) => r.json()).catch(() => null);
+    const ours = [...(json?.scopes_supported ?? [])].sort().join(' ');
+    const theirs = [...(as?.scopes_supported ?? [])].sort().join(' ');
+    check('scopes match the API discovery', ours.length > 0 && ours === theirs, `ours: ${ours} | API: ${theirs}`);
+  }
   if (expectedIssuer) {
     check('authorization server is the expected API', issuer === expectedIssuer, `${issuer} vs ${expectedIssuer}`);
   }
@@ -183,7 +190,8 @@ section('6. Authorization header reaches the origin (CloudFront forwarding)');
     check('Authorization forwarded to origin', res.status === 200, `status ${res.status}`);
   }
   const tools = json?.result?.tools ?? [];
-  check('tools/list returned 36 tools', tools.length === 36, `got ${tools.length}`);
+  // The list is the API registry as this token may use it, so its length follows the token's scopes.
+  check('tools/list returned tools', tools.length > 0, `got ${tools.length}`);
   check('response is JSON, not SSE', (res.headers.get('content-type') || '').includes('application/json'));
   check('a known write tool is present', tools.some((t) => t.name === 'schedule_post'));
 }

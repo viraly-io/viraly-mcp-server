@@ -2,18 +2,21 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import type { Logger } from 'pino';
 
+import { isViralyAccessToken } from '../auth/middleware.js';
 import { runWithTokenContext } from '../auth/token-context.js';
 import { registerAllTools } from '../tools/registry.js';
 
 /**
  * Stdio transport for local CLI usage.
  *
- * Used by `npx @viraly/mcp` — the user runs the binary, an MCP client
+ * Used by `npx @viraly/mcp`: the user runs the binary, an MCP client
  * (Claude Desktop config, Cursor config) attaches via stdin/stdout, and
  * the OAuth `vat_*` token is supplied via the `VIRALY_ACCESS_TOKEN`
- * environment variable.
+ * environment variable. The token must have the `vat_` shape, as on the
+ * HTTP transport: an API key (`vly_`) or a platform key (`vrl_`) is
+ * refused here rather than forwarded (MCP-14).
  *
- * The stdio transport is intentionally simpler than HTTP — no session
+ * The stdio transport is intentionally simpler than HTTP: no session
  * management, no SSE, just JSON-RPC messages over stdio. Use HTTP for
  * any hosted deployment.
  */
@@ -25,6 +28,12 @@ export async function startStdioTransport(logger: Logger): Promise<void> {
     );
     process.exit(1);
   }
+  if (!isViralyAccessToken(accessToken.trim())) {
+    logger.error(
+      'VIRALY_ACCESS_TOKEN is not a Viraly OAuth access token (it must start with vat_). API keys and platform keys do not work with the MCP server.',
+    );
+    process.exit(1);
+  }
 
   const server = new McpServer({
     name: 'viraly',
@@ -33,7 +42,7 @@ export async function startStdioTransport(logger: Logger): Promise<void> {
 
   const transport = new StdioServerTransport();
 
-  await runWithTokenContext({ accessToken }, async () => {
+  await runWithTokenContext({ accessToken: accessToken.trim() }, async () => {
     registerAllTools(server);
     await server.connect(transport);
     logger.info('Viraly MCP server (stdio) ready');

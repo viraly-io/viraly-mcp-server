@@ -17,8 +17,8 @@
  *
  * COLD START
  * ----------
- * Config, logger, app, and the 35-tool registry are all built at module scope,
- * so they are paid once per execution environment and reused by every
+ * Config, logger and app are built at module scope (the tool list is the API's
+ * registry, fetched on each tools/list), so they are paid once per execution environment and reused by every
  * subsequent invocation. `loadConfig()` throws on missing/invalid env vars;
  * throwing here fails Lambda INIT with the real message in the logs, which is
  * the fail-fast behaviour we want rather than a per-request surprise.

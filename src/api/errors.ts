@@ -36,7 +36,21 @@ export class ViralyScopeError extends ViralyApiError {
   }
 }
 
-/** 429 — plan limit hit. The body usually contains structured upgrade context. */
+/**
+ * 403 from the access model: the member behind the connection lacks a permission in the workspace. Reconnecting does
+ * not change that; the workspace Owner does. The API sends P1's code `insufficient_permissions` and the capability.
+ */
+export class ViralyPermissionError extends ViralyApiError {
+  /** The capability the API named (catalog name, for example `posts:publish`), or null. */
+  readonly capability: string | null;
+  constructor(message: string, capability: string | null, upstreamBody: unknown = null) {
+    super(message, 403, 'insufficient_permissions', upstreamBody);
+    this.name = 'ViralyPermissionError';
+    this.capability = capability;
+  }
+}
+
+/** 429: plan limit hit. The body usually contains structured upgrade context. */
 export class ViralyPlanLimitError extends ViralyApiError {
   constructor(message: string, upstreamBody: unknown = null) {
     super(message, 429, 'plan_limit_exceeded', upstreamBody);
